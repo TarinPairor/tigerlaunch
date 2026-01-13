@@ -91,15 +91,31 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ apiKey: apiKey }));
     }
-    // Serve image file
-    else if (req.url === '/image.jpeg' || req.url === '/image.jpg') {
-        fs.readFile(path.join(__dirname, 'image.jpeg'), (err, data) => {
+    // Serve image files from public/images directory
+    else if (req.url.startsWith('/images/')) {
+        const imageName = req.url.replace('/images/', '');
+        const imagePath = path.join(__dirname, 'public', 'images', imageName);
+        
+        // Security: only allow image files
+        const allowedExtensions = ['.jpeg', '.jpg', '.png', '.gif', '.svg', '.webp', '.ico'];
+        const ext = path.extname(imageName).toLowerCase();
+        
+        if (!allowedExtensions.includes(ext)) {
+            res.writeHead(403);
+            res.end('Forbidden file type');
+            return;
+        }
+        
+        fs.readFile(imagePath, (err, data) => {
             if (err) {
                 res.writeHead(404);
                 res.end('Image not found');
                 return;
             }
-            res.writeHead(200, { 'Content-Type': 'image/jpeg' });
+            const contentType = ext === '.svg' ? 'image/svg+xml' : 
+                               ext === '.ico' ? 'image/x-icon' : 
+                               `image/${ext.replace('.', '')}`;
+            res.writeHead(200, { 'Content-Type': contentType });
             res.end(data);
         });
     }

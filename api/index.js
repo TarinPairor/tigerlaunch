@@ -87,21 +87,31 @@ module.exports = async (req, res) => {
             return res.status(200).send(data);
         }
     }
-    // Serve image file
-    else if (pathname === '/image.jpeg' || pathname === '/image.jpg') {
+    // Serve image files from public/images directory
+    else if (pathname.startsWith('/images/')) {
+        const imageName = pathname.replace('/images/', '');
+        const allowedExtensions = ['.jpeg', '.jpg', '.png', '.gif', '.svg', '.webp', '.ico'];
+        const ext = path.extname(imageName).toLowerCase();
+        
+        if (!allowedExtensions.includes(ext)) {
+            return res.status(403).send('Forbidden file type');
+        }
+        
         // Try multiple possible paths for Vercel deployment
         const possiblePaths = [
-            path.join(process.cwd(), 'image.jpeg'),
-            path.join(__dirname, '..', 'image.jpeg'),
-            path.join(process.cwd(), '..', 'image.jpeg'),
-            '/var/task/image.jpeg', // Vercel Lambda path
-            path.join('/var/task', 'image.jpeg')
+            path.join(process.cwd(), 'public', 'images', imageName),
+            path.join(__dirname, '..', 'public', 'images', imageName),
+            path.join(process.cwd(), '..', 'public', 'images', imageName),
+            path.join('/var/task', 'public', 'images', imageName), // Vercel Lambda path
         ];
         
         for (const imagePath of possiblePaths) {
             const data = readFile(imagePath);
             if (data) {
-                res.setHeader('Content-Type', 'image/jpeg');
+                const contentType = ext === '.svg' ? 'image/svg+xml' : 
+                                   ext === '.ico' ? 'image/x-icon' : 
+                                   `image/${ext.replace('.', '')}`;
+                res.setHeader('Content-Type', contentType);
                 res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
                 return res.status(200).send(data);
             }
