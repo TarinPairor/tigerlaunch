@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TICS-m Assessment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            text-align: left;
+            color: #333;
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: #2196f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.listening {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status.processing {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status.speaking {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .status.idle {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .status.countdown {
+            background: #fff9c4;
+            color: #f57f17;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status.scoring {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .start-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .stop-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .message-box {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 150px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .message.user {
+            background: #e3f2fd;
+            margin-left: 20%;
+        }
+
+        .message.assistant {
+            background: #f1f8e9;
+            margin-right: 20%;
+        }
+
+        .message-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .message-text {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .config {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .config input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .config label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .results-header h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .score-card {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .score-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .score-card-header h3 {
+            color: #333;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .score-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .score-badge.correct {
+            background: #4caf50;
+            color: white;
+        }
+
+        .score-badge.incorrect {
+            background: #f44336;
+            color: white;
+        }
+
+        .score-badge.partial {
+            background: #ff9800;
+            color: white;
+        }
+
+        .score-explanation {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .score-explanation.expanded {
+            max-height: 500px;
+        }
+
+        .score-explanation-content {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-stat {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .summary-stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .summary-stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .pipeline-nav {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .pipeline-step {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .next-arrow {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #667eea;
+            transition: all 0.3s;
+            padding: 15px 30px;
+            border-radius: 12px;
+            background: #f5f5ff;
+            border: 2px solid #667eea;
+        }
+
+        .next-arrow:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .next-arrow-icon {
+            font-size: 36px;
+            animation: arrowPulse 2s ease-in-out infinite;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        @keyframes arrowPulse {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(8px);
+            }
+        }
+
+        .next-arrow-text {
+            font-size: 16px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .nav-links {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .dashboard-link {
+            padding: 12px 24px;
+            background: #2196f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-link:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 18px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="/" class="dashboard-link">🏠 Home</a>
+        <a href="/dashboard" class="dashboard-link">📊 View Dashboard</a>
+    </div>
+    
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="font-size: 12px; color: #666; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Step 2 of 3</div>
+            <h1 style="margin: 0;">🧠 Cognitive Assessment</h1>
+            <p style="color: #666; margin-top: 10px; font-size: 16px;">We'll ask you a few simple questions. Please answer naturally and take your time.</p>
+        </div>
+        
+        <div class="config">
+            <label>
+                <input type="password" id="apiKey" placeholder="sk-... or leave empty to use .env">
+            </label>
+        </div>
+
+        <div id="status" class="status idle">Ready to begin your assessment</div>
+
+        <div class="button-group">
+            <button id="startBtn" class="start-btn" onclick="startAssessment()">Begin Assessment</button>
+            <button id="stopBtn" class="stop-btn" onclick="stopAssessment()" disabled>Complete Assessment</button>
+        </div>
+
+        <div class="message-box" id="messages">
+            <div style="text-align: center; color: #999; padding: 20px;">
+                Your assessment will appear here once you begin...
+            </div>
+        </div>
+
+        <div class="pipeline-nav">
+            <div class="pipeline-step">When you're ready, continue to the next step</div>
+            <a href="/audio_test" class="next-arrow">
+                <span class="next-arrow-icon">→</span>
+                <span class="next-arrow-text">Voice Analysis</span>
+            </a>
+        </div>
+
+        <div id="resultsSection" class="results-section">
+            <div class="results-header">
+                <h2>Assessment Results</h2>
+                <div class="loading-spinner" id="scoringSpinner" style="display: none;"></div>
+                <p id="scoringStatus" style="color: #666; margin-top: 10px;"></p>
+            </div>
+
+            <div id="summaryStats" class="summary-stats"></div>
+
+            <div id="scoreCards"></div>
+        </div>
+    </div>
+
+    <script>
+        let peerConnection = null;
+        let audioElement = null;
+        let dataChannel = null;
+        let userAudioTrack = null;
+        let isSessionActive = false;
+        let messageText = '';
+        let conversationHistory = [];
+        let currentCountdown = null;
+
+        // Get API key from input or server
+        async function getApiKey() {
+            const inputKey = document.getElementById('apiKey').value.trim();
+            if (inputKey) {
+                return inputKey;
+            }
+
+            try {
+                const response = await fetch('/api-key');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.apiKey) {
+                        document.getElementById('apiKey').value = data.apiKey;
+                        return data.apiKey;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load API key from server');
+            }
+
+            return null;
+        }
+
+        // Get ephemeral key for Realtime API
+        async function getEphemeralKey(apiKey) {
+            try {
+                const response = await fetch('/token');
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.client_secret?.value || data.clientSecret?.value;
+                }
+            } catch (e) {
+                console.log('Server token endpoint not available, using API key directly');
+            }
+            
+            return apiKey;
+        }
+
+        // Countdown function
+        async function showCountdown(callback) {
+            return new Promise((resolve) => {
+                let count = 3;
+                updateStatus('countdown', count.toString());
+                
+                const countdownInterval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        updateStatus('countdown', count.toString());
+                    } else {
+                        clearInterval(countdownInterval);
+                        updateStatus('listening', '🎤 Listening...');
+                        if (callback) callback();
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
+
+        // Start assessment
+        async function startAssessment() {
+            const apiKey = await getApiKey();
+            
+            if (!apiKey) {
+                alert('Please enter your OpenAI API key in the input field above, or create a .env file with OPENAI_API_KEY=your-key');
+                return;
+            }
+
+            try {
+                updateStatus('processing', '🔄 Connecting...');
+                
+                const ephemeralKey = await getEphemeralKey(apiKey);
+                if (!ephemeralKey) {
+                    throw new Error('Could not get ephemeral key');
+                }
+
+                // Reset conversation history
+                conversationHistory = [];
+                
+                // Create peer connection
+                peerConnection = new RTCPeerConnection();
+
+                // Create audio element for server audio
+                audioElement = document.createElement('audio');
+                audioElement.autoplay = true;
+                audioElement.muted = false;
+                document.body.appendChild(audioElement);
+
+                // Handle incoming server audio
+                peerConnection.ontrack = (event) => {
+                    if (event.track.kind === 'audio' && event.streams && event.streams[0]) {
+                        audioElement.srcObject = event.streams[0];
+                        audioElement.play().catch(e => {
+                            console.error('Audio play failed:', e);
+                        });
+                        updateStatus('speaking', '🔊 AI is speaking...');
+                    }
+                };
+
+                // Create data channel for events
+                dataChannel = peerConnection.createDataChannel('oai-events', { ordered: true });
+                
+                dataChannel.onopen = () => {
+                    console.log('Data channel opened');
+                    isSessionActive = true;
+                    
+                    // Build session configuration with TICS-m script
+                    const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                    const sessionConfig = {
+                        modalities: ['text', 'audio'],
+                        instructions: `You are conducting a TICS-m (Telephone Interview for Cognitive Status-modified) assessment. Follow this script exactly:
+
+1. First say: "First, a few quick questions."
+
+2. Orientation questions (wait for response after each):
+   - "What is today's date?" (The correct answer should match: ${todayDate})
+   - "What city are we in right now?" (The correct answer is: Singapore)
+
+3. Attention questions (wait for response after each):
+   - "I'm going to say some digits. Please repeat them back to me: 8–1–4." (Correct: 8, 1, 4)
+   - "Now repeat these backwards: 6–2–9." (Correct: 9, 2, 6 backwards)
+
+4. Immediate recall:
+   - "I'll say three words. Please repeat them now: river, chair, mango." (Wait for them to repeat all three words)
+
+After each question, wait for the user's complete response before proceeding. Be patient and friendly. Keep your responses brief and move to the next question after acknowledging their answer.`,
+                        input_audio_transcription: {
+                            model: 'whisper-1'
+                        },
+                        turn_detection: {
+                            type: 'server_vad',
+                            threshold: 0.5,
+                            prefix_padding_ms: 300,
+                            silence_duration_ms: 2000
+                        }
+                    };
+                    
+                    // Send session configuration
+                    const event = {
+                        type: 'session.update',
+                        session: sessionConfig
+                    };
+                    dataChannel.send(JSON.stringify(event));
+                    
+                    updateStatus('speaking', '🔊 AI is speaking...');
+                };
+
+                dataChannel.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                };
+
+                // Get user microphone
+                const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                userAudioTrack = userStream.getAudioTracks()[0];
+                peerConnection.addTrack(userAudioTrack, userStream);
+                userAudioTrack.enabled = true;
+
+                // Create offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                // Send offer to OpenAI Realtime API
+                const sdpRes = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17', {
+                    method: 'POST',
+                    body: offer.sdp,
+                    headers: {
+                        'Authorization': `Bearer ${ephemeralKey}`,
+                        'Content-Type': 'application/sdp'
+                    }
+                });
+
+                if (!sdpRes.ok) {
+                    const errorText = await sdpRes.text();
+                    throw new Error(`SDP exchange failed: ${sdpRes.status} - ${errorText}`);
+                }
+
+                // Set remote answer
+                const answerSdp = await sdpRes.text();
+                await peerConnection.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                clearMessages();
+                addMessage('system', 'Assessment started. Please listen carefully and answer each question naturally.');
+
+            } catch (error) {
+                console.error('Error starting assessment:', error);
+                updateStatus('error', `Error: ${error.message}`);
+                stopAssessment();
+            }
+        }
+
+        // Handle messages from Realtime API
+        function handleMessage(message) {
+            if (message.type === 'response.audio_transcript.delta' && message.delta) {
+                messageText += message.delta;
+                updateMessageText(messageText);
+            } else if (message.type === 'response.audio_transcript.done') {
+                // AI finished speaking
+                if (messageText) {
+                    removeStreamingAssistantMessage();
+                    addMessage('assistant', messageText);
+                    conversationHistory.push({ role: 'assistant', content: messageText });
+                    
+                    // Show countdown before listening
+                    showCountdown(() => {
+                        updateStatus('listening', '🎤 Listening...');
+                    });
+                    
+                    messageText = '';
+                }
+            } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
+                // User speech transcribed
+                const transcript = message.transcript;
+                if (transcript) {
+                    addMessage('user', transcript);
+                    conversationHistory.push({ role: 'user', content: transcript });
+                    updateStatus('processing', '🤔 AI is thinking...');
+                }
+            } else if (message.type === 'response.audio.delta') {
+                updateStatus('speaking', '🔊 AI is speaking...');
+            } else if (message.type === 'response.audio.done') {
+                updateStatus('listening', '🎤 Listening...');
+            }
+        }
+
+        // Remove streaming assistant message
+        function removeStreamingAssistantMessage() {
+            const messagesDiv = document.getElementById('messages');
+            const messages = Array.from(messagesDiv.children);
+            
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                if (msg.classList.contains('assistant') && msg.hasAttribute('data-streaming')) {
+                    msg.remove();
+                    break;
+                }
+            }
+        }
+        
+        // Update streaming message text
+        function updateMessageText(text) {
+            const messagesDiv = document.getElementById('messages');
+            const messages = Array.from(messagesDiv.children);
+            
+            let streamingMessage = null;
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                if (msg.classList.contains('assistant') && msg.hasAttribute('data-streaming')) {
+                    streamingMessage = msg;
+                    break;
+                }
+            }
+            
+            if (streamingMessage) {
+                const textDiv = streamingMessage.querySelector('.message-text');
+                if (textDiv) {
+                    textDiv.textContent = text;
+                }
+            } else {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message assistant';
+                messageDiv.setAttribute('data-streaming', 'true');
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'message-label';
+                labelDiv.textContent = '🤖 Assistant';
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'message-text';
+                textDiv.textContent = text;
+                
+                messageDiv.appendChild(labelDiv);
+                messageDiv.appendChild(textDiv);
+                messagesDiv.appendChild(messageDiv);
+            }
+            
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Stop assessment and score
+        async function stopAssessment() {
+            if (dataChannel) {
+                dataChannel.close();
+                dataChannel = null;
+            }
+
+            if (peerConnection) {
+                peerConnection.getSenders().forEach(sender => {
+                    sender.track?.stop();
+                });
+                peerConnection.close();
+                peerConnection = null;
+            }
+
+            if (audioElement) {
+                audioElement.pause();
+                audioElement.srcObject = null;
+                audioElement.remove();
+                audioElement = null;
+            }
+
+            if (userAudioTrack) {
+                userAudioTrack.stop();
+                userAudioTrack = null;
+            }
+
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            isSessionActive = false;
+            messageText = '';
+
+            // If we have conversation history, score it
+            if (conversationHistory.length > 0) {
+                await scoreAssessment();
+            } else {
+                updateStatus('idle', 'Assessment stopped');
+            }
+        }
+
+        // Score assessment using OpenAI API
+        async function scoreAssessment() {
+            const apiKey = await getApiKey();
+            if (!apiKey) {
+                alert('API key needed for scoring');
+                return;
+            }
+
+            updateStatus('scoring', '📊 Scoring assessment...');
+            document.getElementById('resultsSection').classList.add('active');
+            document.getElementById('scoringSpinner').style.display = 'inline-block';
+            document.getElementById('scoringStatus').textContent = 'Analyzing responses...';
+
+            try {
+                // Get today's date for scoring
+                const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                
+                const scoringPrompt = `You are scoring a TICS-m cognitive assessment. Analyze the conversation and provide scores for each question.
+
+The conversation transcript:
+${conversationHistory.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`).join('\n')}
+
+Expected correct answers:
+1. Today's date: Should match ${todayDate}
+2. City: Singapore
+3. Digits forward (8-1-4): Should be "8, 1, 4" or "814" or similar
+4. Digits backward (6-2-9): Should be "9, 2, 6" backwards or "926" backwards or similar
+5. Three words: Should include "river", "chair", and "mango"
+
+Please provide a JSON response with this exact structure:
+{
+  "questions": [
+    {
+      "question": "What is today's date?",
+      "category": "Orientation",
+      "userAnswer": "[extracted answer]",
+      "correct": true/false,
+      "score": 1 or 0,
+      "explanation": "Brief explanation of why correct/incorrect"
+    },
+    {
+      "question": "What city are we in right now?",
+      "category": "Orientation",
+      "userAnswer": "[extracted answer]",
+      "correct": true/false,
+      "score": 1 or 0,
+      "explanation": "Brief explanation"
+    },
+    {
+      "question": "Repeat digits forward: 8-1-4",
+      "category": "Attention",
+      "userAnswer": "[extracted answer]",
+      "correct": true/false,
+      "score": 1 or 0,
+      "explanation": "Brief explanation"
+    },
+    {
+      "question": "Repeat digits backward: 6-2-9",
+      "category": "Attention",
+      "userAnswer": "[extracted answer]",
+      "correct": true/false,
+      "score": 1 or 0,
+      "explanation": "Brief explanation"
+    },
+    {
+      "question": "Repeat three words: river, chair, mango",
+      "category": "Immediate Recall",
+      "userAnswer": "[extracted answer]",
+      "correct": true/false,
+      "score": 1 or 0,
+      "explanation": "Brief explanation. Note: all three words must be present for correct"
+    }
+  ],
+  "summary": {
+    "orientationScore": 0-2,
+    "attentionScore": 0-2,
+    "immediateRecallScore": 0-1,
+    "totalScore": 0-5
+  }
+}
+
+Return ONLY valid JSON, no other text.`;
+
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: [
+                            { role: 'system', content: 'You are a cognitive assessment scoring expert. Always return valid JSON only.' },
+                            { role: 'user', content: scoringPrompt }
+                        ],
+                        temperature: 0.3,
+                        response_format: { type: 'json_object' }
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'Scoring failed');
+                }
+
+                const data = await response.json();
+                const scoreData = JSON.parse(data.choices[0].message.content);
+
+                // Display results
+                displayResults(scoreData);
+
+                // Save to server
+                await saveAssessmentResults(scoreData);
+
+                document.getElementById('scoringSpinner').style.display = 'none';
+                document.getElementById('scoringStatus').textContent = 'Assessment scored successfully!';
+                updateStatus('idle', 'Assessment complete');
+
+            } catch (error) {
+                console.error('Error scoring assessment:', error);
+                document.getElementById('scoringSpinner').style.display = 'none';
+                document.getElementById('scoringStatus').textContent = `Error: ${error.message}`;
+                updateStatus('error', `Scoring error: ${error.message}`);
+            }
+        }
+
+        // Display results
+        function displayResults(scoreData) {
+            const summaryStats = document.getElementById('summaryStats');
+            const summary = scoreData.summary;
+            
+            summaryStats.innerHTML = `
+                <div class="summary-stat">
+                    <div class="summary-stat-label">Orientation</div>
+                    <div class="summary-stat-value">${summary.orientationScore}/2</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-label">Attention</div>
+                    <div class="summary-stat-value">${summary.attentionScore}/2</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-label">Immediate Recall</div>
+                    <div class="summary-stat-value">${summary.immediateRecallScore}/1</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="summary-stat-label">Total Score</div>
+                    <div class="summary-stat-value">${summary.totalScore}/5</div>
+                </div>
+            `;
+
+            const scoreCards = document.getElementById('scoreCards');
+            scoreCards.innerHTML = '';
+
+            scoreData.questions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = 'score-card';
+                
+                const badgeClass = q.correct ? 'correct' : 'incorrect';
+                const badgeText = q.correct ? '✓ Correct' : '✗ Incorrect';
+                
+                card.innerHTML = `
+                    <div class="score-card-header" onclick="toggleExplanation(${index})">
+                        <h3>${q.question}</h3>
+                        <span class="score-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="score-explanation" id="explanation-${index}">
+                        <div class="score-explanation-content">
+                            <p><strong>Your answer:</strong> ${q.userAnswer || 'No answer recorded'}</p>
+                            <p><strong>Explanation:</strong> ${q.explanation}</p>
+                        </div>
+                    </div>
+                `;
+                
+                scoreCards.appendChild(card);
+            });
+        }
+
+        // Toggle explanation
+        function toggleExplanation(index) {
+            const explanation = document.getElementById(`explanation-${index}`);
+            explanation.classList.toggle('expanded');
+        }
+
+        // Save assessment results
+        async function saveAssessmentResults(scoreData) {
+            const now = new Date();
+            const record = {
+                type: 'tics_assessment',
+                dateTime: now.toISOString(),
+                date: now.toISOString().split('T')[0],
+                time: now.toTimeString().split(' ')[0],
+                scores: scoreData.summary,
+                questions: scoreData.questions,
+                conversationHistory: conversationHistory,
+                completed: true
+            };
+
+            try {
+                const response = await fetch('/api/assessments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(record)
+                });
+                if (response.ok) {
+                    console.log('✅ Assessment results saved:', record);
+                } else {
+                    console.error('Failed to save assessment results');
+                }
+            } catch (error) {
+                console.error('Error saving assessment results:', error);
+            }
+        }
+
+        // Add message to UI
+        function addMessage(role, text) {
+            const messagesDiv = document.getElementById('messages');
+            
+            if (messagesDiv.children.length === 1 && messagesDiv.children[0].textContent.includes('Assessment')) {
+                messagesDiv.innerHTML = '';
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'message-label';
+            labelDiv.textContent = role === 'user' ? '👤 You' : role === 'assistant' ? '🤖 Assistant' : 'ℹ️ System';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.textContent = text;
+            
+            messageDiv.appendChild(labelDiv);
+            messageDiv.appendChild(textDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Clear messages
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        // Update status
+        function updateStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            
+            if (type === 'listening') {
+                statusDiv.classList.add('pulse');
+            } else {
+                statusDiv.classList.remove('pulse');
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyParam = urlParams.get('key');
+            if (keyParam) {
+                document.getElementById('apiKey').value = keyParam;
+            } else {
+                try {
+                    const response = await fetch('/api-key');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.apiKey) {
+                            document.getElementById('apiKey').value = data.apiKey;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Running standalone - enter API key manually');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

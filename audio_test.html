@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Analysis Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .image-container {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-label {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 200px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .start-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .stop-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status.idle {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .status.recording {
+            background: #ffebee;
+            color: #c62828;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .status.processing {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status.complete {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .results {
+            display: none;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .results h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-icon {
+            font-size: 32px;
+        }
+
+        .result-icon.healthy {
+            color: #4caf50;
+        }
+
+        .result-icon.mci {
+            color: #ff9800;
+        }
+
+        .description-modal {
+            background: #f0f7ff;
+            border-left: 4px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .description-modal h4 {
+            margin: 0 0 8px 0;
+            color: #1976d2;
+            font-size: 16px;
+        }
+
+        .result-probabilities {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .probability-bar-container {
+            margin-bottom: 20px;
+        }
+
+        .probability-bar-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .probability-bar-wrapper {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .probability-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            animation: barLoad 1s ease-out;
+        }
+
+        .probability-bar.healthy {
+            background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+        }
+
+        .probability-bar.mci {
+            background: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%);
+        }
+
+        @keyframes barLoad {
+            0% {
+                width: 0% !important;
+            }
+        }
+
+        .recording-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #c62828;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .audio-player {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .pipeline-nav {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .pipeline-step {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .next-arrow {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #667eea;
+            transition: all 0.3s;
+            padding: 15px 30px;
+            border-radius: 12px;
+            background: #f5f5ff;
+            border: 2px solid #667eea;
+        }
+
+        .next-arrow:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .next-arrow-icon {
+            font-size: 36px;
+            animation: arrowPulse 2s ease-in-out infinite;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        @keyframes arrowPulse {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(8px);
+            }
+        }
+
+        .next-arrow-text {
+            font-size: 16px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .nav-links {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .dashboard-link {
+            padding: 12px 24px;
+            background: #2196f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-link:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 18px rgba(0,0,0,0.3);
+        }
+
+        .step-indicator {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .instructions {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #1976d2;
+            font-size: 14px;
+        }
+
+        .score-section {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .score-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff9800;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .score-explanation {
+            color: #555;
+            line-height: 1.6;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .transcription-section {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #9c27b0;
+        }
+
+        .transcription-text {
+            color: #333;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        .message-box {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 150px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .message.user {
+            background: #e3f2fd;
+            margin-left: 20%;
+        }
+
+        .message.assistant {
+            background: #f1f8e9;
+            margin-right: 20%;
+        }
+
+        .message-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .message-text {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .config {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .config input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .config label {
+            display: block;
+            font-weight: 500;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="/" class="dashboard-link">🏠 Home</a>
+        <a href="/dashboard" class="dashboard-link">📊 View Dashboard</a>
+    </div>
+    
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="step-indicator">Step 3 of 3</div>
+            <h1 style="margin: 0;">🎤 Voice Analysis</h1>
+            <p style="color: #666; margin-top: 10px; font-size: 16px;">Describe the image below in detail, speaking naturally as you would normally.</p>
+        </div>
+
+        <div class="instructions">
+            <strong>📝 Instructions:</strong> The AI will prompt you to describe the image below. Listen carefully and describe what you see in as much detail as possible.
+        </div>
+        
+        <div class="image-container">
+            <img src="/image.jpeg" alt="Image to describe" id="imageToDescribe">
+            <div class="image-label">Please describe what you see in this image</div>
+        </div>
+
+        <div class="config" style="margin-bottom: 20px;">
+            <label>
+                <input type="password" id="apiKey" placeholder="sk-... or leave empty to use .env">
+            </label>
+        </div>
+
+        <div class="status idle" id="status">
+            Ready to begin
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" class="start-btn" onclick="startAssessment()">Begin Assessment</button>
+            <button id="stopBtn" class="stop-btn" onclick="stopAssessment()" disabled>Complete Assessment</button>
+        </div>
+
+        <div class="message-box" id="messages" style="display: none;">
+            <div style="text-align: center; color: #999; padding: 20px;">
+                Conversation will appear here...
+            </div>
+        </div>
+
+        <div class="audio-player" id="audioPlayer" style="display: none;">
+            <p style="margin-bottom: 10px; color: #666;">Recorded Audio:</p>
+            <audio id="audioPlayback" controls></audio>
+        </div>
+
+        <div class="results" id="results">
+            <h2>Your Analysis Results</h2>
+            
+            <div class="transcription-section" id="transcriptionSection" style="display: none;">
+                <div class="result-label">Your Description</div>
+                <div class="transcription-text" id="transcriptionText">-</div>
+            </div>
+
+            <div class="score-section" id="scoreSection" style="display: none;">
+                <div class="result-label">Description Score</div>
+                <div class="score-value" id="scoreValue">-</div>
+                <div class="score-explanation" id="scoreExplanation">-</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Voice Analysis Result</div>
+                <div class="result-value" id="predictedClass">-</div>
+            </div>
+            <div class="description-modal" id="descriptionModal" style="display: none;">
+                <h4 id="descriptionTitle"></h4>
+                <p id="descriptionText"></p>
+            </div>
+            <div class="result-item" id="probabilitiesSection" style="display: none;">
+                <div class="result-label">Detailed Probabilities</div>
+                <div class="result-probabilities" id="probabilities"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let peerConnection = null;
+        let audioElement = null;
+        let dataChannel = null;
+        let userAudioTrack = null;
+        let userStream = null;
+        let isSessionActive = false;
+        let messageText = '';
+        let userTranscription = '';
+        let audioBlob = null;
+        let mediaRecorder = null;
+        let isRecording = false;
+        let audioSegments = []; // Array to store audio segments from each listening period
+        let currentSegmentChunks = []; // Chunks for current segment
+        const API_ENDPOINT = 'http://localhost:5001/analyze';
+        const IDEAL_DESCRIPTION = "The image shows a cozy living room scene where a family appears to be relaxing together. Two children are sitting comfortably on a large purple sofa, facing a television on the left side of the room that is showing an underwater scene with a fish swimming among plants. The boy is sitting upright while the girl is leaning back, holding what looks like a book or tablet. A woman, likely their mother, is standing in the doorway behind them, watching the room with a calm expression. A cat is sitting alertly on a blue armchair near the door, looking toward the television. In the center of the room, there is a wooden coffee table with a glass of water, a book, and a remote control neatly placed on it. A pair of shoes lies on the floor near the sofa, and a small side table with a lamp stands to the right, adding to the warm, homey atmosphere of the scene.";
+
+        // Get API key from input or server
+        async function getApiKey() {
+            const inputKey = document.getElementById('apiKey').value.trim();
+            if (inputKey) {
+                return inputKey;
+            }
+
+            try {
+                const response = await fetch('/api-key');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.apiKey) {
+                        document.getElementById('apiKey').value = data.apiKey;
+                        return data.apiKey;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load API key from server');
+            }
+
+            return null;
+        }
+
+        // Get ephemeral key for Realtime API
+        async function getEphemeralKey(apiKey) {
+            try {
+                const response = await fetch('/token');
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.client_secret?.value || data.clientSecret?.value;
+                }
+            } catch (e) {
+                console.log('Server token endpoint not available, using API key directly');
+            }
+            
+            return apiKey;
+        }
+
+        // Start assessment
+        async function startAssessment() {
+            const apiKey = await getApiKey();
+            
+            if (!apiKey) {
+                alert('Please enter your OpenAI API key in the input field above, or create a .env file with OPENAI_API_KEY=your-key');
+                return;
+            }
+
+            try {
+                updateStatus('processing', '🔄 Connecting...');
+                
+                const ephemeralKey = await getEphemeralKey(apiKey);
+                if (!ephemeralKey) {
+                    throw new Error('Could not get ephemeral key');
+                }
+
+                // Reset variables
+                userTranscription = '';
+                messageText = '';
+                audioSegments = [];
+                currentSegmentChunks = [];
+                isRecording = false;
+
+                // Create peer connection
+                peerConnection = new RTCPeerConnection();
+
+                // Create audio element for server audio
+                audioElement = document.createElement('audio');
+                audioElement.autoplay = true;
+                audioElement.muted = false;
+                document.body.appendChild(audioElement);
+
+                // Handle incoming server audio
+                peerConnection.ontrack = (event) => {
+                    if (event.track.kind === 'audio' && event.streams && event.streams[0]) {
+                        audioElement.srcObject = event.streams[0];
+                        audioElement.play().catch(e => {
+                            console.error('Audio play failed:', e);
+                        });
+                        updateStatus('speaking', '🔊 AI is speaking...');
+                    }
+                };
+
+                // Create data channel for events
+                dataChannel = peerConnection.createDataChannel('oai-events', { ordered: true });
+                
+                dataChannel.onopen = () => {
+                    console.log('Data channel opened');
+                    isSessionActive = true;
+                    
+                    // Build session configuration
+                    const sessionConfig = {
+                        modalities: ['text', 'audio'],
+                        instructions: `You are helping with a cognitive assessment. Show the user an image and ask them to describe what they see in it. 
+
+Say something like: "I'd like you to look at the image on the screen and describe what you see in as much detail as possible. Take your time and describe everything you notice - the people, objects, colors, activities, and the overall scene. When you're ready, please begin describing the image."
+
+After the user describes the image, briefly acknowledge their description (e.g., "Thank you for that detailed description.") and then wait. Keep your responses brief and focused on getting the user to describe the image.`,
+                        input_audio_transcription: {
+                            model: 'whisper-1'
+                        },
+                        turn_detection: {
+                            type: 'server_vad',
+                            threshold: 0.5,
+                            prefix_padding_ms: 300,
+                            silence_duration_ms: 3000
+                        }
+                    };
+                    
+                    // Send session configuration
+                    const event = {
+                        type: 'session.update',
+                        session: sessionConfig
+                    };
+                    dataChannel.send(JSON.stringify(event));
+                    
+                    updateStatus('speaking', '🔊 AI is speaking...');
+                };
+
+                dataChannel.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                };
+
+                // Get user microphone
+                userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                userAudioTrack = userStream.getAudioTracks()[0];
+                peerConnection.addTrack(userAudioTrack, userStream);
+                userAudioTrack.enabled = true;
+
+                // MediaRecorder will be started/stopped based on listening state
+                // Don't start recording yet - wait for listening state
+
+                // Create offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                // Send offer to OpenAI Realtime API
+                const sdpRes = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17', {
+                    method: 'POST',
+                    body: offer.sdp,
+                    headers: {
+                        'Authorization': `Bearer ${ephemeralKey}`,
+                        'Content-Type': 'application/sdp'
+                    }
+                });
+
+                if (!sdpRes.ok) {
+                    const errorText = await sdpRes.text();
+                    throw new Error(`SDP exchange failed: ${sdpRes.status} - ${errorText}`);
+                }
+
+                // Set remote answer
+                const answerSdp = await sdpRes.text();
+                await peerConnection.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('messages').style.display = 'block';
+                clearMessages();
+                addMessage('system', 'Assessment started. The AI will prompt you to describe the image.');
+
+            } catch (error) {
+                console.error('Error starting assessment:', error);
+                updateStatus('error', `Error: ${error.message}`);
+                stopAssessment();
+            }
+        }
+
+        // Start recording user audio segment (during listening state)
+        function startRecordingSegment() {
+            if (!userStream || isRecording) {
+                return;
+            }
+
+            try {
+                currentSegmentChunks = [];
+                mediaRecorder = new MediaRecorder(userStream);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        currentSegmentChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    // Save this segment
+                    if (currentSegmentChunks.length > 0) {
+                        const segmentBlob = new Blob(currentSegmentChunks, { type: 'audio/webm' });
+                        audioSegments.push(segmentBlob);
+                        console.log(`✅ Saved audio segment ${audioSegments.length}, size: ${segmentBlob.size} bytes`);
+                    }
+                    currentSegmentChunks = [];
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                console.log('🎤 Started recording user audio segment');
+            } catch (error) {
+                console.error('Error starting audio recording:', error);
+            }
+        }
+
+        // Stop recording user audio segment (when user stops speaking)
+        function stopRecordingSegment() {
+            if (mediaRecorder && isRecording && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                isRecording = false;
+                console.log('🛑 Stopped recording user audio segment');
+            }
+        }
+
+        // Handle messages from Realtime API
+        function handleMessage(message) {
+            if (message.type === 'response.audio_transcript.delta' && message.delta) {
+                messageText += message.delta;
+                updateMessageText(messageText);
+            } else if (message.type === 'response.audio_transcript.done') {
+                // AI finished speaking
+                if (messageText) {
+                    removeStreamingAssistantMessage();
+                    addMessage('assistant', messageText);
+                    messageText = '';
+                }
+                updateStatus('listening', '🎤 Listening...');
+                // Start recording when we enter listening state (user will speak)
+                startRecordingSegment();
+            } else if (message.type === 'conversation.item.input_audio_transcription.started') {
+                // User started speaking - ensure we're recording
+                if (!isRecording) {
+                    startRecordingSegment();
+                }
+            } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
+                // User finished speaking - stop recording this segment
+                stopRecordingSegment();
+                
+                // User speech transcribed
+                const transcript = message.transcript;
+                if (transcript) {
+                    userTranscription += (userTranscription ? ' ' : '') + transcript;
+                    addMessage('user', transcript);
+                    updateStatus('processing', '🤔 AI is thinking...');
+                }
+            } else if (message.type === 'response.audio.delta') {
+                updateStatus('speaking', '🔊 AI is speaking...');
+                // Stop recording if AI starts speaking (in case user was still speaking)
+                stopRecordingSegment();
+            } else if (message.type === 'response.audio.done') {
+                updateStatus('listening', '🎤 Listening...');
+                // Start recording when we enter listening state
+                startRecordingSegment();
+            }
+        }
+
+        // Remove streaming assistant message
+        function removeStreamingAssistantMessage() {
+            const messagesDiv = document.getElementById('messages');
+            const messages = Array.from(messagesDiv.children);
+            
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                if (msg.classList.contains('assistant') && msg.hasAttribute('data-streaming')) {
+                    msg.remove();
+                    break;
+                }
+            }
+        }
+        
+        // Update streaming message text
+        function updateMessageText(text) {
+            const messagesDiv = document.getElementById('messages');
+            const messages = Array.from(messagesDiv.children);
+            
+            let streamingMessage = null;
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                if (msg.classList.contains('assistant') && msg.hasAttribute('data-streaming')) {
+                    streamingMessage = msg;
+                    break;
+                }
+            }
+            
+            if (streamingMessage) {
+                const textDiv = streamingMessage.querySelector('.message-text');
+                if (textDiv) {
+                    textDiv.textContent = text;
+                }
+            } else {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message assistant';
+                messageDiv.setAttribute('data-streaming', 'true');
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'message-label';
+                labelDiv.textContent = '🤖 Assistant';
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'message-text';
+                textDiv.textContent = text;
+                
+                messageDiv.appendChild(labelDiv);
+                messageDiv.appendChild(textDiv);
+                messagesDiv.appendChild(messageDiv);
+            }
+            
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Stop assessment and analyze
+        async function stopAssessment() {
+            if (dataChannel) {
+                dataChannel.close();
+                dataChannel = null;
+            }
+
+            if (peerConnection) {
+                peerConnection.getSenders().forEach(sender => {
+                    sender.track?.stop();
+                });
+                peerConnection.close();
+                peerConnection = null;
+            }
+
+            if (audioElement) {
+                audioElement.pause();
+                audioElement.srcObject = null;
+                audioElement.remove();
+                audioElement = null;
+            }
+
+            // Stop any ongoing recording segment
+            stopRecordingSegment();
+
+            // Wait a bit for the last segment to finish saving
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Combine all audio segments into one continuous audio stream
+            if (audioSegments.length > 0) {
+                console.log(`🔗 Combining ${audioSegments.length} audio segments...`);
+                
+                try {
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Decode all segments to AudioBuffers
+                    const audioBuffers = [];
+                    for (let i = 0; i < audioSegments.length; i++) {
+                        const arrayBuffer = await audioSegments[i].arrayBuffer();
+                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        audioBuffers.push(audioBuffer);
+                        console.log(`✅ Decoded segment ${i + 1}/${audioSegments.length}, duration: ${audioBuffer.duration.toFixed(2)}s`);
+                    }
+
+                    // Combine all AudioBuffers into one continuous buffer
+                    const sampleRate = audioBuffers[0].sampleRate;
+                    const numberOfChannels = audioBuffers[0].numberOfChannels;
+                    let totalLength = 0;
+                    
+                    // Calculate total length
+                    audioBuffers.forEach(buffer => {
+                        totalLength += buffer.length;
+                    });
+
+                    // Create combined buffer
+                    const combinedBuffer = audioContext.createBuffer(numberOfChannels, totalLength, sampleRate);
+                    
+                    // Copy each buffer into the combined buffer
+                    let offset = 0;
+                    audioBuffers.forEach((buffer, index) => {
+                        for (let channel = 0; channel < numberOfChannels; channel++) {
+                            const channelData = combinedBuffer.getChannelData(channel);
+                            const sourceData = buffer.getChannelData(channel);
+                            // Copy sourceData starting at offset
+                            channelData.set(sourceData, offset);
+                        }
+                        offset += buffer.length;
+                        console.log(`  Copied segment ${index + 1}/${audioBuffers.length} (${buffer.length} samples) at offset ${offset - buffer.length}`);
+                    });
+
+                    console.log(`✅ Combined ${audioSegments.length} segments into one buffer, total duration: ${combinedBuffer.duration.toFixed(2)}s`);
+
+                    // Convert combined AudioBuffer to WAV
+                    audioBlob = audioBufferToWav(combinedBuffer);
+                    console.log(`✅ Converted to WAV, size: ${audioBlob.size} bytes`);
+
+                    // For debugging: play the combined audio
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById('audioPlayback').src = audioUrl;
+                    document.getElementById('audioPlayer').style.display = 'block';
+            } catch (error) {
+                    console.error('Error combining/converting audio:', error);
+                    // Fallback: try simple blob combination
+                    audioBlob = new Blob(audioSegments, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById('audioPlayback').src = audioUrl;
+                    document.getElementById('audioPlayer').style.display = 'block';
+                }
+            } else {
+                console.warn('⚠️ No audio segments recorded');
+                audioBlob = null;
+            }
+
+            if (userAudioTrack) {
+                userAudioTrack.stop();
+                userAudioTrack = null;
+            }
+
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+            isSessionActive = false;
+            messageText = '';
+
+            // Analyze audio with transcription and voice analysis
+            if (userTranscription || audioBlob) {
+                await analyzeAudio();
+            } else {
+                updateStatus('idle', 'Assessment stopped');
+            }
+        }
+
+        // Add message to UI
+        function addMessage(role, text) {
+            const messagesDiv = document.getElementById('messages');
+            
+            if (messagesDiv.children.length === 1 && messagesDiv.children[0].textContent.includes('Conversation')) {
+                messagesDiv.innerHTML = '';
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'message-label';
+            labelDiv.textContent = role === 'user' ? '👤 You' : role === 'assistant' ? '🤖 Assistant' : 'ℹ️ System';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.textContent = text;
+            
+            messageDiv.appendChild(labelDiv);
+            messageDiv.appendChild(textDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Clear messages
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+
+        // Score the description
+        async function scoreDescription(transcription) {
+            const openAiKey = await getOpenAIApiKey();
+            if (!openAiKey) {
+                // If no OpenAI API key, use a simple scoring method
+                return scoreDescriptionSimple(transcription);
+            }
+
+            try {
+                // Use OpenAI to score the description
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${openAiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are an expert evaluator. Score image descriptions on a scale of 0-10 based on detail, accuracy, and completeness. Return ONLY valid JSON.'
+                            },
+                            {
+                                role: 'user',
+                                content: `Ideal description: "${IDEAL_DESCRIPTION}"\n\nUser's description: "${transcription}"\n\nScore this description out of 10 and provide a brief explanation. Return JSON: {"score": 0-10, "explanation": "..."}`
+                            }
+                        ],
+                        temperature: 0.3,
+                        response_format: { type: 'json_object' }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Scoring failed');
+                }
+
+                const data = await response.json();
+                const scoreData = JSON.parse(data.choices[0].message.content);
+                return scoreData;
+            } catch (error) {
+                console.error('Error scoring with OpenAI, using simple method:', error);
+                return scoreDescriptionSimple(transcription);
+            }
+        }
+
+        // Simple scoring method (fallback)
+        function scoreDescriptionSimple(transcription) {
+            const lowerTranscription = transcription.toLowerCase();
+            const lowerIdeal = IDEAL_DESCRIPTION.toLowerCase();
+            
+            // Count key elements mentioned
+            const keyElements = [
+                'family', 'children', 'sofa', 'purple', 'television', 'tv', 'underwater', 'fish',
+                'woman', 'mother', 'doorway', 'cat', 'armchair', 'coffee table', 'water', 'book',
+                'remote', 'shoes', 'lamp', 'living room'
+            ];
+            
+            let matches = 0;
+            keyElements.forEach(element => {
+                if (lowerTranscription.includes(element)) {
+                    matches++;
+                }
+            });
+            
+            const score = Math.min(10, Math.round((matches / keyElements.length) * 10));
+            const explanation = `Your description mentioned ${matches} out of ${keyElements.length} key elements. ${score >= 7 ? 'Great job describing the scene!' : score >= 4 ? 'Good effort, but try to include more details.' : 'Try to be more detailed and specific in your description.'}`;
+            
+            return { score, explanation };
+        }
+
+        // Get OpenAI API key (for scoring)
+        async function getOpenAIApiKey() {
+            try {
+                const response = await fetch('/api-key');
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.apiKey;
+                }
+            } catch (e) {
+                console.log('Could not load OpenAI API key');
+            }
+            return null;
+        }
+
+        async function analyzeAudio() {
+            try {
+                // Step 1: Display transcription (already captured from Realtime API)
+                updateStatus('processing', '🔄 Processing your description...');
+                
+                const transcription = userTranscription || 'No transcription available';
+                
+                // Display transcription
+                document.getElementById('transcriptionText').textContent = transcription;
+                document.getElementById('transcriptionSection').style.display = 'block';
+
+                // Step 2: Score the description
+                if (transcription && transcription !== 'No transcription available') {
+                    updateStatus('processing', '📊 Scoring your description...');
+                    const scoreData = await scoreDescription(transcription);
+                    
+                    // Display score
+                    document.getElementById('scoreValue').textContent = `${scoreData.score}/10`;
+                    document.getElementById('scoreExplanation').textContent = scoreData.explanation;
+                    document.getElementById('scoreSection').style.display = 'block';
+                }
+
+                // Step 3: Analyze voice features (if audio available)
+            if (!audioBlob) {
+                    // No audio for voice analysis, show what we have
+                    document.getElementById('results').classList.add('active');
+                    updateStatus('complete', '✅ Description analysis complete! Voice analysis skipped (no audio recorded).');
+                return;
+            }
+
+                updateStatus('processing', '🔄 Analyzing voice features...');
+
+                // Convert blob to File for FormData
+                const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio', audioFile);
+
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                
+                // Display results
+                const prediction = result.prediction || result.pred || 'Unknown';
+                const normalizedPrediction = normalizePrediction(prediction);
+                
+                const predictedClassDiv = document.getElementById('predictedClass');
+                predictedClassDiv.innerHTML = '';
+                
+                // Add icon
+                const icon = document.createElement('span');
+                icon.className = `result-icon ${normalizedPrediction.toLowerCase()}`;
+                icon.textContent = normalizedPrediction === 'Healthy' ? '✅' : '⚠️';
+                predictedClassDiv.appendChild(icon);
+                
+                // Add text
+                const text = document.createElement('span');
+                text.textContent = normalizedPrediction;
+                predictedClassDiv.appendChild(text);
+                
+                // Show description modal
+                const descriptionModal = document.getElementById('descriptionModal');
+                const descriptionTitle = document.getElementById('descriptionTitle');
+                const descriptionText = document.getElementById('descriptionText');
+                
+                if (normalizedPrediction === 'Healthy') {
+                    descriptionTitle.textContent = '✅ Healthy Cognitive Status';
+                    descriptionText.textContent = 'Your voice analysis indicates healthy cognitive function. This is a positive result, but please remember this is a screening tool and not a medical diagnosis.';
+                    descriptionModal.style.display = 'block';
+                } else if (normalizedPrediction === 'MCI') {
+                    descriptionTitle.textContent = '⚠️ Mild Cognitive Impairment (MCI)';
+                    descriptionText.textContent = 'Your voice analysis suggests possible mild cognitive impairment. This is a screening result and should be discussed with a healthcare professional for proper evaluation.';
+                    descriptionModal.style.display = 'block';
+                } else {
+                    descriptionModal.style.display = 'none';
+                }
+                
+                // Display probabilities as horizontal bar chart
+                if (result.probabilities) {
+                    const probSection = document.getElementById('probabilitiesSection');
+                    const probContainer = document.getElementById('probabilities');
+                    probContainer.innerHTML = '';
+                    
+                    // Sort probabilities by value (highest first)
+                    const sortedProbs = Object.entries(result.probabilities)
+                        .sort((a, b) => b[1] - a[1]);
+                    
+                    sortedProbs.forEach(([label, value]) => {
+                        const normalizedLabel = normalizePrediction(label);
+                        const percentage = (value * 100).toFixed(1);
+                        const barClass = normalizedLabel.toLowerCase();
+                        
+                        const probContainerItem = document.createElement('div');
+                        probContainerItem.className = 'probability-bar-container';
+                        probContainerItem.innerHTML = `
+                            <div class="probability-bar-label">
+                                <span>${normalizedLabel}</span>
+                                <span>${percentage}%</span>
+                            </div>
+                            <div class="probability-bar-wrapper">
+                                <div class="probability-bar ${barClass}" style="width: 0%;" data-width="${percentage}">
+                                    ${percentage}%
+                                </div>
+                            </div>
+                        `;
+                        probContainer.appendChild(probContainerItem);
+                    });
+                    
+                    // Animate bars after a short delay
+                    setTimeout(() => {
+                        const bars = probContainer.querySelectorAll('.probability-bar');
+                        bars.forEach(bar => {
+                            const width = bar.getAttribute('data-width');
+                            bar.style.width = width + '%';
+                        });
+                    }, 100);
+                    
+                    probSection.style.display = 'block';
+                } else {
+                    document.getElementById('probabilitiesSection').style.display = 'none';
+                }
+
+                document.getElementById('results').classList.add('active');
+                updateStatus('complete', '✅ Analysis complete! View your results below.');
+            } catch (error) {
+                console.error('Error analyzing audio:', error);
+                updateStatus('idle', '❌ Error: ' + error.message);
+                alert('Error analyzing audio: ' + error.message);
+            }
+        }
+
+        function updateStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            
+            if (type === 'recording') {
+                statusDiv.innerHTML = '<span class="recording-indicator"></span>' + message;
+            } else {
+                statusDiv.textContent = message;
+            }
+        }
+
+        // Normalize prediction labels (CTRL -> Healthy, etc.)
+        function normalizePrediction(pred) {
+            const predStr = String(pred).toUpperCase().trim();
+            if (predStr === 'CTRL' || predStr === 'CONTROL' || predStr === 'HEALTHY') {
+                return 'Healthy';
+            } else if (predStr === 'MCI' || predStr.includes('MCI')) {
+                return 'MCI';
+            }
+            return pred; // Return original if not recognized
+        }
+
+        // Convert AudioBuffer to WAV Blob
+        function audioBufferToWav(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const format = 1; // PCM
+            const bitDepth = 16;
+            
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+            
+            const length = buffer.length * numChannels * bytesPerSample + 44;
+            const arrayBuffer = new ArrayBuffer(length);
+            const view = new DataView(arrayBuffer);
+            const samples = [];
+            
+            // Convert float samples to 16-bit PCM
+            for (let channel = 0; channel < numChannels; channel++) {
+                const channelData = buffer.getChannelData(channel);
+                for (let i = 0; i < channelData.length; i++) {
+                    const sample = Math.max(-1, Math.min(1, channelData[i]));
+                    samples.push(sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
+                }
+            }
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, length - 8, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(36, 'data');
+            view.setUint32(40, length - 44, true);
+            
+            // Write samples
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++) {
+                view.setInt16(offset, samples[i], true);
+                offset += 2;
+            }
+            
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyParam = urlParams.get('key');
+            if (keyParam) {
+                document.getElementById('apiKey').value = keyParam;
+            } else {
+                try {
+                    const response = await fetch('/api-key');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.apiKey) {
+                            document.getElementById('apiKey').value = data.apiKey;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Running standalone - enter API key manually');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

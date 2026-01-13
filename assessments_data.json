@@ -1,0 +1,107 @@
+[
+  {
+    "type": "tics_assessment",
+    "dateTime": "2026-01-11T23:31:10.346Z",
+    "date": "2026-01-11",
+    "time": "06:31:10",
+    "scores": {
+      "orientationScore": 0,
+      "attentionScore": 1,
+      "immediateRecallScore": 1,
+      "totalScore": 2
+    },
+    "questions": [
+      {
+        "question": "What is today's date?",
+        "category": "Orientation",
+        "userAnswer": "December 3rd, 1984",
+        "correct": false,
+        "score": 0,
+        "explanation": "The correct date is January 12, 2026."
+      },
+      {
+        "question": "What city are we in right now?",
+        "category": "Orientation",
+        "userAnswer": "Bangkok",
+        "correct": false,
+        "score": 0,
+        "explanation": "The correct city is Singapore."
+      },
+      {
+        "question": "Repeat digits forward: 8-1-4",
+        "category": "Attention",
+        "userAnswer": "814",
+        "correct": true,
+        "score": 1,
+        "explanation": "The user correctly repeated the digits forward."
+      },
+      {
+        "question": "Repeat digits backward: 6-2-9",
+        "category": "Attention",
+        "userAnswer": "6 2 9",
+        "correct": false,
+        "score": 0,
+        "explanation": "The user did not reverse the digits correctly."
+      },
+      {
+        "question": "Repeat three words: river, chair, mango",
+        "category": "Immediate Recall",
+        "userAnswer": "Chair River Mango",
+        "correct": true,
+        "score": 1,
+        "explanation": "All three words were present, although in a different order."
+      }
+    ],
+    "conversationHistory": [
+      {
+        "role": "user",
+        "content": "Hi."
+      },
+      {
+        "role": "assistant",
+        "content": "First, a few quick questions. What is today's date?"
+      },
+      {
+        "role": "user",
+        "content": "December 3rd, 1984"
+      },
+      {
+        "role": "assistant",
+        "content": "Thank you. What city are we in right now?"
+      },
+      {
+        "role": "user",
+        "content": "Bangkok."
+      },
+      {
+        "role": "assistant",
+        "content": "Alright. Now, I'm going to say some digits. Please repeat them back to me: 8–1–4."
+      },
+      {
+        "role": "user",
+        "content": "814-"
+      },
+      {
+        "role": "assistant",
+        "content": "Great. Now repeat these backwards: 6–2–9."
+      },
+      {
+        "role": "user",
+        "content": "6 2 9"
+      },
+      {
+        "role": "assistant",
+        "content": "Well done. I'll say three words now. Please repeat them: river, chair, mango."
+      },
+      {
+        "role": "user",
+        "content": "Chair River Mango"
+      },
+      {
+        "role": "assistant",
+        "content": "Thank you for your responses. Now, let's continue with the next steps."
+      }
+    ],
+    "completed": true
+  }
+]

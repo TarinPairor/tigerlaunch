@@ -1,0 +1,6 @@
+pyaudio
+openai>=1.0.0
+pyttsx3
+numpy
+sounddevice
+matplotlib

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflexion - Cognitive Assessment Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .menu-icon span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background: #333;
+            border-radius: 2px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .profile-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .nav-tabs {
+            background: white;
+            display: flex;
+            padding: 0 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .nav-tab {
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #999;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .nav-tab:hover {
+            color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .page-subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-content {
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .card-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            flex-shrink: 0;
+        }
+
+        .card-icon.conversation {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-icon.cognitive {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .card-icon.voice {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .card-icon.dashboard {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .step-indicator {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="logo">Reflexion</div>
+        </div>
+        <div class="profile-icon">U</div>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showTab('exercises')">Cognitive Assessments</button>
+        <button class="nav-tab" onclick="showTab('dashboard')">Dashboard</button>
+    </div>
+
+    <div class="container">
+        <div id="exercises-tab">
+            <h1 class="page-title">Cognitive Assessments</h1>
+            <p class="page-subtitle">Select an assessment to begin your cognitive evaluation</p>
+
+            <div class="cards-grid">
+                <a href="/conversation_realtime" class="card">
+                    <div class="card-icon conversation">💬</div>
+                    <div class="card-content">
+                        <div class="card-title">Conversation Assessment</div>
+                        <div class="card-description">Have a natural conversation with our AI assistant. This interactive assessment helps evaluate cognitive function through conversational analysis.</div>
+                        <span class="step-indicator">Step 1</span>
+                    </div>
+                </a>
+
+                <a href="/tics_assessment" class="card">
+                    <div class="card-icon cognitive">🧠</div>
+                    <div class="card-content">
+                        <div class="card-title">Cognitive Assessment</div>
+                        <div class="card-description">Complete the TICS-m (Telephone Interview for Cognitive Status) assessment. Answer questions about orientation, attention, and memory.</div>
+                        <span class="step-indicator">Step 2</span>
+                    </div>
+                </a>
+
+                <a href="/audio_test" class="card">
+                    <div class="card-icon voice">🎤</div>
+                    <div class="card-content">
+                        <div class="card-title">Voice Analysis</div>
+                        <div class="card-description">Describe an image in detail while we analyze your voice characteristics. This assessment evaluates both description quality and vocal biomarkers.</div>
+                        <span class="step-indicator">Step 3</span>
+                    </div>
+                </a>
+
+                <a href="/dashboard" class="card">
+                    <div class="card-icon dashboard">📊</div>
+                    <div class="card-content">
+                        <div class="card-title">Results Dashboard</div>
+                        <div class="card-description">View all your assessment results, track your progress over time, and see detailed analytics from your cognitive evaluations.</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div id="dashboard-tab" style="display: none;">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">View your assessment results and analytics</p>
+
+            <div class="cards-grid">
+                <a href="/dashboard" class="card">
+                    <div class="card-icon dashboard">📊</div>
+                    <div class="card-content">
+                        <div class="card-title">View Full Dashboard</div>
+                        <div class="card-description">Access comprehensive analytics, charts, and detailed results from all your assessments.</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            document.getElementById('exercises-tab').style.display = 'none';
+            document.getElementById('dashboard-tab').style.display = 'none';
+
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            if (tabName === 'exercises') {
+                document.getElementById('exercises-tab').style.display = 'block';
+                document.querySelectorAll('.nav-tab')[0].classList.add('active');
+            } else if (tabName === 'dashboard') {
+                document.getElementById('dashboard-tab').style.display = 'block';
+                document.querySelectorAll('.nav-tab')[1].classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Conversation Companion (Realtime)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.listening {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status.processing {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status.speaking {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .status.idle {
+            background: #f5f5f5;
+            color: #666;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .start-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .stop-btn {
+            background: #f44336;
+            color: white;
+        }
+
+        .message-box {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .message.user {
+            background: #e3f2fd;
+            margin-left: 20%;
+        }
+
+        .message.assistant {
+            background: #f1f8e9;
+            margin-right: 20%;
+        }
+
+        .message-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 12px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .message-text {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .message-metrics {
+            font-size: 11px;
+            color: #666;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            font-style: italic;
+        }
+
+        .config {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .config input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .config label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .pipeline-nav {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .pipeline-step {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .next-arrow {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #667eea;
+            transition: all 0.3s;
+            padding: 15px 30px;
+            border-radius: 12px;
+            background: #f5f5ff;
+            border: 2px solid #667eea;
+        }
+
+        .next-arrow:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .next-arrow-icon {
+            font-size: 36px;
+            animation: arrowPulse 2s ease-in-out infinite;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        @keyframes arrowPulse {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(8px);
+            }
+        }
+
+        .next-arrow-text {
+            font-size: 16px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .nav-links {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .dashboard-link {
+            padding: 12px 24px;
+            background: #2196f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-link:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 18px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="/" class="dashboard-link">🏠 Home</a>
+        <a href="/dashboard" class="dashboard-link">📊 View Dashboard</a>
+    </div>
+    
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 12px; color: #666; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Step 1 of 3</div>
+            <h1 style="margin: 0;">🎙️ Start Your Conversation</h1>
+            <p style="color: #666; margin-top: 10px; font-size: 16px;">Have a natural conversation with our AI companion. Speak freely and take your time.</p>
+        </div>
+        
+        <div class="config">
+            <label>
+                Silence Wait Time (ms):
+                <input type="number" id="silenceDuration" value="0" min="0" max="10000" step="500">
+                <small style="display: block; margin-top: 5px; color: #666; font-weight: normal;">
+                    How long to wait after silence before responding. 0ms = no delay (original behavior). Higher values = more patient for slower speakers.
+                </small>
+            </label>
+            <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="setSilenceDuration(0)" style="padding: 5px 10px; font-size: 12px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">No Delay (0ms)</button>
+                <button onclick="setSilenceDuration(1500)" style="padding: 5px 10px; font-size: 12px; background: #e0e0e0; border: none; border-radius: 5px; cursor: pointer;">Fast (1.5s)</button>
+                <button onclick="setSilenceDuration(3000)" style="padding: 5px 10px; font-size: 12px; background: #e0e0e0; border: none; border-radius: 5px; cursor: pointer;">Normal (3s)</button>
+                <button onclick="setSilenceDuration(5000)" style="padding: 5px 10px; font-size: 12px; background: #e0e0e0; border: none; border-radius: 5px; cursor: pointer;">Slow (5s)</button>
+                <button onclick="setSilenceDuration(7000)" style="padding: 5px 10px; font-size: 12px; background: #e0e0e0; border: none; border-radius: 5px; cursor: pointer;">Very Slow (7s)</button>
+            </div>
+        </div>
+
+        <div id="status" class="status idle">Ready to start your conversation</div>
+
+        <div class="button-group">
+            <button id="startBtn" class="start-btn" onclick="startConversation()">Start Conversation</button>
+            <button id="stopBtn" class="stop-btn" onclick="stopConversation()" disabled>End Conversation</button>
+        </div>
+
+        <div class="message-box" id="messages">
+            <div style="text-align: center; color: #999; padding: 20px;">
+                Your conversation will appear here once you start...
+            </div>
+        </div>
+
+        <div class="pipeline-nav">
+            <div class="pipeline-step">When you're ready, continue to the next step</div>
+            <a href="/tics_assessment" class="next-arrow">
+                <span class="next-arrow-icon">→</span>
+                <span class="next-arrow-text">Cognitive Assessment</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let peerConnection = null;
+        let audioElement = null;
+        let dataChannel = null;
+        let userAudioTrack = null;
+        let serverAudioStream = null;
+        let isSessionActive = false;
+        let messageText = '';
+        let userSpeakingStartTime = null;
+        let aiResponseStartTime = null;
+        let currentUserTranscript = '';
+        
+        // Conversation metrics tracking
+        let sessionStartTime = null;
+        let sessionEndTime = null;
+        let userMessages = [];
+        let totalWordsSpoken = 0;
+        let totalSpeakingDuration = 0;
+
+        // Get API key from server
+        async function getApiKey() {
+            try {
+                const response = await fetch('/api-key');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.apiKey) {
+                        return data.apiKey;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load API key from server');
+            }
+
+            return null;
+        }
+
+        // Get ephemeral key for Realtime API
+        async function getEphemeralKey(apiKey) {
+            try {
+                // Try to get from server endpoint
+                const response = await fetch('/token');
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.client_secret?.value || data.clientSecret?.value;
+                }
+            } catch (e) {
+                console.log('Server token endpoint not available, using API key directly');
+            }
+            
+            // Fallback: use API key directly (may not work for Realtime API)
+            return apiKey;
+        }
+
+        // Start conversation with Realtime API
+        async function startConversation() {
+            const apiKey = await getApiKey();
+            
+            if (!apiKey) {
+                alert('Please create a .env file with OPENAI_API_KEY=your-key');
+                return;
+            }
+
+            try {
+                updateStatus('processing', '🔄 Connecting...');
+                
+                // Get ephemeral key
+                const ephemeralKey = await getEphemeralKey(apiKey);
+                if (!ephemeralKey) {
+                    throw new Error('Could not get ephemeral key');
+                }
+
+                // Create peer connection
+                peerConnection = new RTCPeerConnection();
+
+                // Create audio element for server audio
+                audioElement = document.createElement('audio');
+                audioElement.autoplay = true;
+                audioElement.muted = false;
+                document.body.appendChild(audioElement);
+
+                // Handle incoming server audio
+                peerConnection.ontrack = (event) => {
+                    if (event.track.kind === 'audio' && event.streams && event.streams[0]) {
+                        serverAudioStream = event.streams[0];
+                        audioElement.srcObject = event.streams[0];
+                        audioElement.play().catch(e => {
+                            console.error('Audio play failed:', e);
+                        });
+                        updateStatus('speaking', '🔊 AI is speaking...');
+                    }
+                };
+
+                // Create data channel for events
+                dataChannel = peerConnection.createDataChannel('oai-events', { ordered: true });
+                
+                dataChannel.onopen = () => {
+                    console.log('Data channel opened');
+                    isSessionActive = true;
+                    updateStatus('listening', '🎤 Listening...');
+                    
+                    // Get silence duration from input (default 0ms for no delay)
+                    const silenceDurationInput = document.getElementById('silenceDuration').value;
+                    const silenceDuration = silenceDurationInput !== '' ? parseInt(silenceDurationInput) : 0;
+                    
+                    // Build session configuration
+                    const sessionConfig = {
+                        modalities: ['text', 'audio'],
+                        instructions: silenceDuration === 0 
+                            ? 'You are a friendly, helpful AI companion. Keep responses concise and conversational, suitable for voice interaction. Limit responses to 2-3 sentences.'
+                            : 'You are a friendly, helpful AI companion speaking with an elderly person who may speak slowly. Be patient, wait for them to finish speaking completely, and keep responses concise and conversational. Limit responses to 2-3 sentences.',
+                        input_audio_transcription: {
+                            model: 'whisper-1'
+                        }
+                    };
+                    
+                    // Only add turn detection if silence duration is > 0 (for delay)
+                    if (silenceDuration > 0) {
+                        sessionConfig.turn_detection = {
+                            type: 'server_vad',
+                            threshold: 0.5,
+                            prefix_padding_ms: 300,
+                            silence_duration_ms: silenceDuration
+                        };
+                    }
+                    
+                    // Send session configuration
+                    const event = {
+                        type: 'session.update',
+                        session: sessionConfig
+                    };
+                    dataChannel.send(JSON.stringify(event));
+                    
+                    // Enable user audio
+                    if (userAudioTrack) {
+                        userAudioTrack.enabled = true;
+                    }
+                };
+
+                dataChannel.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                };
+
+                // Get user microphone
+                const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                userAudioTrack = userStream.getAudioTracks()[0];
+                peerConnection.addTrack(userAudioTrack, userStream);
+                
+                // Start with mic enabled for continuous listening
+                userAudioTrack.enabled = true;
+
+                // Create offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                // Send offer to OpenAI Realtime API
+                const sdpRes = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17', {
+                    method: 'POST',
+                    body: offer.sdp,
+                    headers: {
+                        'Authorization': `Bearer ${ephemeralKey}`,
+                        'Content-Type': 'application/sdp'
+                    }
+                });
+
+                if (!sdpRes.ok) {
+                    const errorText = await sdpRes.text();
+                    throw new Error(`SDP exchange failed: ${sdpRes.status} - ${errorText}`);
+                }
+
+                // Set remote answer
+                const answerSdp = await sdpRes.text();
+                await peerConnection.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                clearMessages();
+                addMessage('system', 'Connected! You can now start speaking naturally...');
+                
+                // Initialize session tracking
+                sessionStartTime = Date.now();
+                userMessages = [];
+                totalWordsSpoken = 0;
+                totalSpeakingDuration = 0;
+
+            } catch (error) {
+                console.error('Error starting session:', error);
+                updateStatus('error', `Error: ${error.message}`);
+                stopConversation();
+            }
+        }
+
+        // Handle messages from Realtime API
+        function handleMessage(message) {
+            // Debug: log all message types to see what we're getting
+            if (message.type && message.type.includes('input_audio') || message.type.includes('transcription')) {
+                console.log('Audio transcription event:', message.type, message);
+            }
+            
+            if (message.type === 'response.audio_transcript.delta' && message.delta) {
+                messageText += message.delta;
+                updateMessageText(messageText);
+            } else if (message.type === 'response.audio_transcript.done') {
+                // Final transcript received - remove streaming message and add final one
+                if (messageText) {
+                    // Remove any existing streaming assistant message
+                    removeStreamingAssistantMessage();
+                    // Add final message
+                    addMessage('assistant', messageText);
+                    messageText = '';
+                }
+                updateStatus('listening', '🎤 Listening...');
+            } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
+                // User speech transcribed
+                const transcript = message.transcript;
+                if (transcript) {
+                    // Calculate metrics
+                    const wordCount = transcript.trim().split(/\s+/).filter(word => word.length > 0).length;
+                    
+                    // Calculate duration from when user started speaking
+                    let speakingDuration = 'N/A';
+                    const transcriptionCompleteTime = Date.now();
+                    
+                    // Try multiple ways to get the start time
+                    let actualStartTime = userSpeakingStartTime;
+                    
+                    // Check if message has item with created_at or started_at
+                    if (!actualStartTime && message.item) {
+                        if (message.item.created_at) {
+                            actualStartTime = new Date(message.item.created_at).getTime();
+                        } else if (message.item.started_at) {
+                            actualStartTime = new Date(message.item.started_at).getTime();
+                        }
+                    }
+                    
+                    // Check if message itself has timestamp
+                    if (!actualStartTime && message.created_at) {
+                        actualStartTime = new Date(message.created_at).getTime();
+                    }
+                    
+                    console.log('Transcription completed:', {
+                        userSpeakingStartTime,
+                        actualStartTime,
+                        aiResponseStartTime,
+                        transcriptionCompleteTime,
+                        messageItem: message.item
+                    });
+                    
+                    // Calculate words per second
+                    let wordsPerSecond = null;
+                    let durationSeconds = 0;
+                    
+                    if (actualStartTime) {
+                        // Use AI response time if AI cut in while user was speaking, 
+                        // otherwise use transcription complete time (when user finished speaking)
+                        const endTime = (aiResponseStartTime && aiResponseStartTime < transcriptionCompleteTime && aiResponseStartTime > actualStartTime) 
+                            ? aiResponseStartTime 
+                            : transcriptionCompleteTime;
+                        const durationMs = endTime - actualStartTime;
+                        console.log('Calculated duration:', durationMs, 'ms from', actualStartTime, 'to', endTime);
+                        if (durationMs > 0) {
+                            durationSeconds = durationMs / 1000;
+                            speakingDuration = durationSeconds.toFixed(2) + 's';
+                            
+                            // Calculate words per second
+                            if (wordCount > 0 && durationSeconds > 0) {
+                                wordsPerSecond = parseFloat((wordCount / durationSeconds).toFixed(2));
+                            }
+                        }
+                    }
+                    
+                    // Track metrics
+                    totalWordsSpoken += wordCount;
+                    if (durationSeconds > 0) {
+                        totalSpeakingDuration += durationSeconds;
+                    }
+                    
+                    // Store user message data
+                    userMessages.push({
+                        wordCount: wordCount,
+                        duration: durationSeconds,
+                        speechRate: wordsPerSecond
+                    });
+                    
+                    addMessage('user', transcript, wordCount, speakingDuration, wordsPerSecond);
+                    updateStatus('processing', '🤔 AI is thinking...');
+                    
+                    // Reset tracking AFTER displaying message
+                    userSpeakingStartTime = null;
+                    aiResponseStartTime = null;
+                    currentUserTranscript = '';
+                }
+            } else if (message.type === 'conversation.item.input_audio_transcription.delta' || 
+                       message.type === 'input_audio_transcription.delta' ||
+                       (message.type === 'conversation.item.input_audio_transcription' && message.delta)) {
+                // User is speaking - track start time on first delta
+                if (!userSpeakingStartTime) {
+                    userSpeakingStartTime = Date.now();
+                    console.log('User started speaking at:', userSpeakingStartTime);
+                    aiResponseStartTime = null; // Reset AI response time
+                }
+                if (message.delta) {
+                    currentUserTranscript += message.delta;
+                }
+            } else if (message.type === 'conversation.item.created' && message.item && message.item.type === 'input_audio_transcription') {
+                // Track when transcription item is created (user started speaking)
+                if (!userSpeakingStartTime) {
+                    if (message.item.created_at) {
+                        userSpeakingStartTime = new Date(message.item.created_at).getTime();
+                    } else {
+                        userSpeakingStartTime = Date.now();
+                    }
+                    console.log('User started speaking (item created) at:', userSpeakingStartTime);
+                    aiResponseStartTime = null;
+                }
+            } else if (message.type && message.type.includes('input_audio') && !message.type.includes('completed')) {
+                // Catch other input audio events to track start time
+                if (!userSpeakingStartTime) {
+                    userSpeakingStartTime = Date.now();
+                    console.log('User started speaking (alternative event) at:', userSpeakingStartTime, message.type);
+                }
+            } else if (message.type === 'response.audio.delta') {
+                // Audio is being streamed - AI is responding
+                // This is when AI cuts in (if user was still speaking)
+                if (userSpeakingStartTime && !aiResponseStartTime) {
+                    aiResponseStartTime = Date.now();
+                    console.log('AI started responding at:', aiResponseStartTime, 'User started at:', userSpeakingStartTime);
+                }
+                updateStatus('speaking', '🔊 AI is speaking...');
+            } else if (message.type === 'response.audio.done') {
+                // Audio finished
+                updateStatus('listening', '🎤 Listening...');
+            }
+        }
+
+        // Remove streaming assistant message (if exists)
+        function removeStreamingAssistantMessage() {
+            const messagesDiv = document.getElementById('messages');
+            const messages = Array.from(messagesDiv.children);
+            
+            // Find and remove the last assistant message if it's marked as streaming
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                if (msg.classList.contains('assistant') && msg.hasAttribute('data-streaming')) {
+                    msg.remove();
+                    break;
+                }
+            }
+        }
+        
+        // Update streaming message text
+        function updateMessageText(text) {
+            const messagesDiv = document.getElementById('messages');
+            const messages = Array.from(messagesDiv.children);
+            
+            // Find the last streaming assistant message
+            let streamingMessage = null;
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                if (msg.classList.contains('assistant') && msg.hasAttribute('data-streaming')) {
+                    streamingMessage = msg;
+                    break;
+                }
+            }
+            
+            if (streamingMessage) {
+                // Update existing streaming message
+                const textDiv = streamingMessage.querySelector('.message-text');
+                if (textDiv) {
+                    textDiv.textContent = text;
+                }
+            } else {
+                // Create new streaming message with data attribute
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message assistant';
+                messageDiv.setAttribute('data-streaming', 'true');
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'message-label';
+                labelDiv.textContent = '🤖 Assistant';
+                
+                const textDiv = document.createElement('div');
+                textDiv.className = 'message-text';
+                textDiv.textContent = text;
+                
+                messageDiv.appendChild(labelDiv);
+                messageDiv.appendChild(textDiv);
+                messagesDiv.appendChild(messageDiv);
+            }
+            
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Stop conversation
+        async function stopConversation() {
+            sessionEndTime = Date.now();
+            
+            if (dataChannel) {
+                dataChannel.close();
+                dataChannel = null;
+            }
+
+            if (peerConnection) {
+                peerConnection.getSenders().forEach(sender => {
+                    sender.track?.stop();
+                });
+                peerConnection.close();
+                peerConnection = null;
+            }
+
+            if (audioElement) {
+                audioElement.pause();
+                audioElement.srcObject = null;
+                audioElement.remove();
+                audioElement = null;
+            }
+
+            if (userAudioTrack) {
+                userAudioTrack.stop();
+                userAudioTrack = null;
+            }
+
+            // Calculate and save session metrics
+            if (sessionStartTime) {
+                const sessionDuration = (sessionEndTime - sessionStartTime) / 1000; // in seconds
+                const speechActivity = sessionDuration > 0 ? totalSpeakingDuration / sessionDuration : 0;
+                
+                // Calculate average speech rate
+                const validRates = userMessages
+                    .map(m => m.speechRate)
+                    .filter(r => r && r > 0);
+                const avgSpeechRate = validRates.length > 0
+                    ? validRates.reduce((a, b) => a + b, 0) / validRates.length
+                    : 0;
+                
+                // Create record
+                const now = new Date();
+                const record = {
+                    dateTime: now.toISOString(),
+                    date: now.toISOString().split('T')[0],
+                    time: now.toTimeString().split(' ')[0],
+                    duration: Math.round(sessionDuration),
+                    speechActivity: parseFloat(speechActivity.toFixed(3)),
+                    avgSpeechRate: parseFloat(avgSpeechRate.toFixed(2)),
+                    totalWords: totalWordsSpoken,
+                    messageCount: userMessages.length,
+                    completed: true
+                };
+                
+                // Save to server
+                try {
+                    const response = await fetch('/api/conversations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(record)
+                    });
+                    if (response.ok) {
+                        console.log('✅ Session data saved:', record);
+                        updateStatus('idle', 'Session saved!');
+                    } else {
+                        console.error('Failed to save session data');
+                    }
+                } catch (error) {
+                    console.error('Error saving session data:', error);
+                }
+            }
+
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            isSessionActive = false;
+            serverAudioStream = null;
+            messageText = '';
+            userSpeakingStartTime = null;
+            aiResponseStartTime = null;
+            currentUserTranscript = '';
+            updateStatus('idle', 'Stopped');
+        }
+
+        // Add message to UI
+        function addMessage(role, text, wordCount = null, speakingDuration = null, wordsPerSecond = null) {
+            const messagesDiv = document.getElementById('messages');
+            
+            if (messagesDiv.children.length === 1 && messagesDiv.children[0].textContent.includes('Conversation')) {
+                messagesDiv.innerHTML = '';
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'message-label';
+            labelDiv.textContent = role === 'user' ? '👤 You' : role === 'assistant' ? '🤖 Assistant' : 'ℹ️ System';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.textContent = text;
+            
+            messageDiv.appendChild(labelDiv);
+            messageDiv.appendChild(textDiv);
+            
+            // Add metrics for user messages
+            if (role === 'user' && (wordCount !== null || speakingDuration !== null || wordsPerSecond !== null)) {
+                const metricsDiv = document.createElement('div');
+                metricsDiv.className = 'message-metrics';
+                const metrics = [];
+                if (wordCount !== null) {
+                    metrics.push(`${wordCount} word${wordCount !== 1 ? 's' : ''}`);
+                }
+                if (speakingDuration !== null && speakingDuration !== 'N/A') {
+                    metrics.push(`Spoke for ${speakingDuration}`);
+                }
+                if (wordsPerSecond !== null) {
+                    metrics.push(`${wordsPerSecond} words/sec`);
+                }
+                metricsDiv.textContent = metrics.join(' • ');
+                messageDiv.appendChild(metricsDiv);
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Clear messages
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        // Update status
+        function updateStatus(type, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            
+            if (type === 'listening') {
+                statusDiv.classList.add('pulse');
+            } else {
+                statusDiv.classList.remove('pulse');
+            }
+        }
+
+        // Set silence duration preset
+        function setSilenceDuration(ms) {
+            document.getElementById('silenceDuration').value = ms;
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', async () => {
+            // API key is loaded from server when needed
+        });
+    </script>
+</body>
+</html>
+
+

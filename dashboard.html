@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-download {
+            background: #ff9800;
+            color: white;
+        }
+
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .records-table th {
+            background: #f5f5f5;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .records-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .records-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-active {
+            background: #4caf50;
+            color: white;
+        }
+
+        .badge-inactive {
+            background: #ccc;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .date-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .date-filter input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .date-filter button {
+            padding: 10px 20px;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #333;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .reload-btn {
+            padding: 8px 16px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .reload-btn:hover:not(:disabled) {
+            background: #1976d2;
+            transform: translateY(-1px);
+        }
+
+        .reload-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: #f44336;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn:hover {
+            background: #ffebee;
+            transform: scale(1.1);
+        }
+
+        .data-section {
+            position: relative;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 10px;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Dashboard</h1>
+            <p class="subtitle">Track conversation metrics and cognitive assessments</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Sessions</div>
+                <div class="stat-value" id="totalSessions">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Duration</div>
+                <div class="stat-value" id="totalDuration">0h 0m</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Speech Rate</div>
+                <div class="stat-value" id="avgSpeechRate">0.0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Today's Sessions</div>
+                <div class="stat-value" id="todaySessions">0</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <button class="btn-primary" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn-download" onclick="downloadJSON()">📥 Download JSON</button>
+                <button class="btn-secondary" onclick="window.location.href='/'">🏠 Go to Home</button>
+                <button class="btn-secondary" onclick="window.location.href='/conversation_realtime'">💬 Go to Conversation</button>
+                <button class="btn-secondary" onclick="window.location.href='/tics_assessment'" style="background: #9c27b0;">🧠 TICS Assessment</button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('conversations')">💬 Conversations</button>
+                <button class="tab" onclick="switchTab('assessments')">🧠 TICS Assessments</button>
+            </div>
+
+            <!-- Conversations Tab -->
+            <div id="conversationsTab" class="tab-content active">
+                <div class="date-filter">
+                    <label>Filter by Date:</label>
+                    <input type="date" id="dateFilter" onchange="filterByDate()">
+                    <button onclick="clearFilter()">Clear Filter</button>
+                </div>
+
+                <div class="data-section" id="conversationsDataSection">
+                    <div class="loading-overlay" id="conversationsLoadingOverlay">
+                        <div class="loading-spinner"></div>
+                    </div>
+                    <div class="table-actions">
+                        <div></div>
+                        <button class="reload-btn" onclick="reloadConversations()" id="reloadConversationsBtn">
+                            🔄 Reload
+                        </button>
+                    </div>
+                    <div id="recordsContainer">
+                        <div class="loading">Loading records...</div>
+                    </div>
+                </div>
+
+                <div class="charts-section" id="chartsSection" style="display: none;">
+                    <div class="chart-card">
+                        <div class="chart-title">Speech Rate Trend (words/sec)</div>
+                        <div class="chart-container">
+                            <canvas id="speechRateChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Session Duration Trend</div>
+                        <div class="chart-container">
+                            <canvas id="durationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Speech Activity Trend (%)</div>
+                        <div class="chart-container">
+                            <canvas id="speechActivityChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Daily Sessions Count</div>
+                        <div class="chart-container">
+                            <canvas id="sessionsCountChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessments Tab -->
+            <div id="assessmentsTab" class="tab-content">
+                <div class="date-filter">
+                    <label>Filter by Date:</label>
+                    <input type="date" id="assessmentDateFilter" onchange="filterAssessmentByDate()">
+                    <button onclick="clearAssessmentFilter()">Clear Filter</button>
+                </div>
+
+                <div class="data-section" id="assessmentsDataSection">
+                    <div class="loading-overlay" id="assessmentsLoadingOverlay">
+                        <div class="loading-spinner"></div>
+                    </div>
+                    <div class="table-actions">
+                        <div></div>
+                        <button class="reload-btn" onclick="reloadAssessments()" id="reloadAssessmentsBtn">
+                            🔄 Reload
+                        </button>
+                    </div>
+                    <div id="assessmentsContainer">
+                        <div class="loading">Loading assessments...</div>
+                    </div>
+                </div>
+
+                <div class="charts-section" id="assessmentChartsSection" style="display: none;">
+                    <div class="chart-card">
+                        <div class="chart-title">Orientation Score Trend</div>
+                        <div class="chart-container">
+                            <canvas id="orientationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Attention Score Trend</div>
+                        <div class="chart-container">
+                            <canvas id="attentionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Immediate Recall Score Trend</div>
+                        <div class="chart-container">
+                            <canvas id="recallChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Total Score Trend</div>
+                        <div class="chart-container">
+                            <canvas id="totalScoreChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allRecords = [];
+        let filteredRecords = [];
+        let allAssessments = [];
+        let filteredAssessments = [];
+        let currentTab = 'conversations';
+
+        // Load data on page load
+        window.addEventListener('load', () => {
+            refreshData();
+            refreshAssessments();
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'conversations') {
+                document.querySelector('.tab[onclick="switchTab(\'conversations\')"]').classList.add('active');
+                document.getElementById('conversationsTab').classList.add('active');
+            } else {
+                document.querySelector('.tab[onclick="switchTab(\'assessments\')"]').classList.add('active');
+                document.getElementById('assessmentsTab').classList.add('active');
+            }
+        }
+
+        async function refreshData() {
+            try {
+                const response = await fetch('/api/conversations');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                allRecords = await response.json();
+                filteredRecords = allRecords;
+                displayData();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                const container = document.getElementById('recordsContainer');
+                if (container) {
+                    container.innerHTML = '<div class="empty-state">Error loading data. Please try again.</div>';
+                }
+            }
+            // Also refresh assessments
+            refreshAssessments();
+        }
+
+        async function refreshAssessments() {
+            try {
+                const response = await fetch('/api/assessments');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch assessments');
+                }
+                allAssessments = await response.json();
+                filteredAssessments = allAssessments;
+                if (currentTab === 'assessments') {
+                    displayAssessments();
+                }
+            } catch (error) {
+                console.error('Error loading assessments:', error);
+                const container = document.getElementById('assessmentsContainer');
+                if (container) {
+                    container.innerHTML = '<div class="empty-state">Error loading assessments. Please try again.</div>';
+                }
+            }
+        }
+
+        let speechRateChart = null;
+        let durationChart = null;
+        let speechActivityChart = null;
+        let sessionsCountChart = null;
+
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m ${secs}s`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        function displayData() {
+            // Calculate statistics
+            const totalSessions = filteredRecords.length;
+            const totalDuration = filteredRecords.reduce((sum, r) => sum + (r.duration || 0), 0);
+            
+            const speechRates = filteredRecords
+                .map(r => r.avgSpeechRate)
+                .filter(r => r && r > 0);
+            const avgSpeechRate = speechRates.length > 0
+                ? (speechRates.reduce((a, b) => a + b, 0) / speechRates.length).toFixed(2)
+                : '0.0';
+
+            const today = new Date().toISOString().split('T')[0];
+            const todaySessions = filteredRecords.filter(r => r.date === today).length;
+
+            // Update stats
+            document.getElementById('totalSessions').textContent = totalSessions;
+            document.getElementById('totalDuration').textContent = formatDuration(totalDuration);
+            document.getElementById('avgSpeechRate').textContent = avgSpeechRate;
+            document.getElementById('todaySessions').textContent = todaySessions;
+            
+            // Update charts
+            updateCharts();
+
+            // Display records table
+            if (filteredRecords.length === 0) {
+                document.getElementById('recordsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h3>No records found</h3>
+                        <p>Start a conversation to see data here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let tableHTML = `
+                <table class="records-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Duration</th>
+                            <th>Speech Activity</th>
+                            <th>Avg Speech Rate</th>
+                            <th>Words Spoken</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            filteredRecords.sort((a, b) => {
+                const dateA = new Date(a.dateTime || a.date + ' ' + a.time);
+                const dateB = new Date(b.dateTime || b.date + ' ' + b.time);
+                return dateB - dateA;
+            });
+
+            filteredRecords.forEach((record, index) => {
+                const duration = record.duration || 0;
+                const durationStr = formatDuration(duration);
+
+                const speechActivity = record.speechActivity || 0;
+                const speechActivityPercent = (speechActivity * 100).toFixed(1);
+
+                const avgSpeechRate = record.avgSpeechRate ? record.avgSpeechRate.toFixed(2) : 'N/A';
+                const wordsSpoken = record.totalWords || 0;
+
+                // Find original index in allRecords - use dateTime as primary identifier since it should be unique
+                const originalIndex = allRecords.findIndex(r => {
+                    // Try to match by dateTime first (most unique)
+                    if (r.dateTime && record.dateTime) {
+                        return r.dateTime === record.dateTime;
+                    }
+                    // Fallback to date + time combination
+                    return r.date === record.date && r.time === record.time;
+                });
+
+                tableHTML += `
+                    <tr>
+                        <td>${record.date || 'N/A'}</td>
+                        <td>${record.time || 'N/A'}</td>
+                        <td>${durationStr}</td>
+                        <td>${speechActivityPercent}%</td>
+                        <td>${avgSpeechRate} words/sec</td>
+                        <td>${wordsSpoken}</td>
+                        <td><span class="badge ${record.completed ? 'badge-active' : 'badge-inactive'}">${record.completed ? 'Completed' : 'Incomplete'}</span></td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteConversation(${originalIndex})" title="Delete session">
+                                🗑️
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('recordsContainer').innerHTML = tableHTML;
+            
+            // Show charts section if we have data
+            if (filteredRecords.length > 0) {
+                document.getElementById('chartsSection').style.display = 'grid';
+            } else {
+                document.getElementById('chartsSection').style.display = 'none';
+            }
+        }
+
+        function updateCharts() {
+            if (filteredRecords.length === 0) return;
+
+            // Sort records by date
+            const sortedRecords = [...filteredRecords].sort((a, b) => {
+                const dateA = new Date(a.dateTime || a.date + ' ' + a.time);
+                const dateB = new Date(b.dateTime || b.date + ' ' + b.time);
+                return dateA - dateB;
+            });
+
+            // Prepare data for charts
+            const labels = sortedRecords.map(r => {
+                const date = new Date(r.dateTime || r.date + ' ' + r.time);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+
+            // Speech Rate Chart
+            const speechRateData = sortedRecords.map(r => r.avgSpeechRate || 0);
+            updateChart('speechRateChart', labels, speechRateData, 'Speech Rate (words/sec)', 'rgb(75, 192, 192)');
+
+            // Duration Chart
+            const durationData = sortedRecords.map(r => (r.duration || 0) / 60); // Convert to minutes
+            updateChart('durationChart', labels, durationData, 'Duration (minutes)', 'rgb(255, 99, 132)');
+
+            // Speech Activity Chart
+            const speechActivityData = sortedRecords.map(r => ((r.speechActivity || 0) * 100));
+            updateChart('speechActivityChart', labels, speechActivityData, 'Speech Activity (%)', 'rgb(255, 206, 86)');
+
+            // Daily Sessions Count Chart
+            const dailyCounts = {};
+            sortedRecords.forEach(r => {
+                const date = r.date || new Date(r.dateTime).toISOString().split('T')[0];
+                dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+            });
+            const dailyLabels = Object.keys(dailyCounts).sort();
+            const dailyData = dailyLabels.map(date => dailyCounts[date]);
+            const dailyLabelsFormatted = dailyLabels.map(date => {
+                const d = new Date(date);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            updateChart('sessionsCountChart', dailyLabelsFormatted, dailyData, 'Sessions', 'rgb(153, 102, 255)');
+        }
+
+        function updateChart(canvasId, labels, data, label, color) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (canvasId === 'speechRateChart' && speechRateChart) {
+                speechRateChart.destroy();
+                speechRateChart = null;
+            } else if (canvasId === 'durationChart' && durationChart) {
+                durationChart.destroy();
+                durationChart = null;
+            } else if (canvasId === 'speechActivityChart' && speechActivityChart) {
+                speechActivityChart.destroy();
+                speechActivityChart = null;
+            } else if (canvasId === 'sessionsCountChart' && sessionsCountChart) {
+                sessionsCountChart.destroy();
+                sessionsCountChart = null;
+            }
+
+            // Create new chart
+            const chartConfig = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            };
+
+            // Create and store chart
+            const newChart = new Chart(ctx, chartConfig);
+            
+            if (canvasId === 'speechRateChart') {
+                speechRateChart = newChart;
+            } else if (canvasId === 'durationChart') {
+                durationChart = newChart;
+            } else if (canvasId === 'speechActivityChart') {
+                speechActivityChart = newChart;
+            } else if (canvasId === 'sessionsCountChart') {
+                sessionsCountChart = newChart;
+            }
+        }
+
+        function filterByDate() {
+            const dateFilter = document.getElementById('dateFilter').value;
+            if (dateFilter) {
+                filteredRecords = allRecords.filter(r => r.date === dateFilter);
+            } else {
+                filteredRecords = allRecords;
+            }
+            displayData();
+        }
+
+        function clearFilter() {
+            document.getElementById('dateFilter').value = '';
+            filteredRecords = allRecords;
+            displayData();
+        }
+
+        function downloadJSON() {
+            const dataStr = currentTab === 'conversations' 
+                ? JSON.stringify(filteredRecords, null, 2)
+                : JSON.stringify(filteredAssessments, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${currentTab}-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Assessment display functions
+        function displayAssessments() {
+            if (filteredAssessments.length === 0) {
+                document.getElementById('assessmentsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <h3>No assessments found</h3>
+                        <p>Complete a TICS assessment to see data here</p>
+                    </div>
+                `;
+                document.getElementById('assessmentChartsSection').style.display = 'none';
+                return;
+            }
+
+            let tableHTML = `
+                <table class="records-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Orientation</th>
+                            <th>Attention</th>
+                            <th>Immediate Recall</th>
+                            <th>Total Score</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            filteredAssessments.sort((a, b) => {
+                const dateA = new Date(a.dateTime || a.date + ' ' + a.time);
+                const dateB = new Date(b.dateTime || b.date + ' ' + b.time);
+                return dateB - dateA;
+            });
+
+            filteredAssessments.forEach((record, index) => {
+                const scores = record.scores || {};
+                const orientationScore = scores.orientationScore || 0;
+                const attentionScore = scores.attentionScore || 0;
+                const recallScore = scores.immediateRecallScore || 0;
+                const totalScore = scores.totalScore || 0;
+
+                // Find original index in allAssessments
+                const originalIndex = allAssessments.findIndex(a => 
+                    a.dateTime === record.dateTime && 
+                    a.date === record.date && 
+                    a.time === record.time
+                );
+
+                tableHTML += `
+                    <tr>
+                        <td>${record.date || 'N/A'}</td>
+                        <td>${record.time || 'N/A'}</td>
+                        <td>${orientationScore}/2</td>
+                        <td>${attentionScore}/2</td>
+                        <td>${recallScore}/1</td>
+                        <td><strong>${totalScore}/5</strong></td>
+                        <td><span class="badge ${record.completed ? 'badge-active' : 'badge-inactive'}">${record.completed ? 'Completed' : 'Incomplete'}</span></td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteAssessment(${originalIndex})" title="Delete assessment">
+                                🗑️
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('assessmentsContainer').innerHTML = tableHTML;
+            
+            // Show charts
+            if (filteredAssessments.length > 0) {
+                document.getElementById('assessmentChartsSection').style.display = 'grid';
+                updateAssessmentCharts();
+            } else {
+                document.getElementById('assessmentChartsSection').style.display = 'none';
+            }
+        }
+
+        let orientationChart = null;
+        let attentionChart = null;
+        let recallChart = null;
+        let totalScoreChart = null;
+
+        function updateAssessmentCharts() {
+            if (filteredAssessments.length === 0) return;
+
+            const sortedAssessments = [...filteredAssessments].sort((a, b) => {
+                const dateA = new Date(a.dateTime || a.date + ' ' + a.time);
+                const dateB = new Date(b.dateTime || b.date + ' ' + b.time);
+                return dateA - dateB;
+            });
+
+            const labels = sortedAssessments.map(a => {
+                const date = new Date(a.dateTime || a.date + ' ' + a.time);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+
+            const orientationData = sortedAssessments.map(a => (a.scores || {}).orientationScore || 0);
+            const attentionData = sortedAssessments.map(a => (a.scores || {}).attentionScore || 0);
+            const recallData = sortedAssessments.map(a => (a.scores || {}).immediateRecallScore || 0);
+            const totalData = sortedAssessments.map(a => (a.scores || {}).totalScore || 0);
+
+            updateAssessmentChart('orientationChart', labels, orientationData, 'Orientation Score (0-2)', 'rgb(75, 192, 192)', 2);
+            updateAssessmentChart('attentionChart', labels, attentionData, 'Attention Score (0-2)', 'rgb(255, 99, 132)', 2);
+            updateAssessmentChart('recallChart', labels, recallData, 'Immediate Recall Score (0-1)', 'rgb(255, 206, 86)', 1);
+            updateAssessmentChart('totalScoreChart', labels, totalData, 'Total Score (0-5)', 'rgb(153, 102, 255)', 5);
+        }
+
+        function updateAssessmentChart(canvasId, labels, data, label, color, maxValue) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            // Destroy existing chart if it exists
+            if (canvasId === 'orientationChart' && orientationChart) {
+                orientationChart.destroy();
+                orientationChart = null;
+            } else if (canvasId === 'attentionChart' && attentionChart) {
+                attentionChart.destroy();
+                attentionChart = null;
+            } else if (canvasId === 'recallChart' && recallChart) {
+                recallChart.destroy();
+                recallChart = null;
+            } else if (canvasId === 'totalScoreChart' && totalScoreChart) {
+                totalScoreChart.destroy();
+                totalScoreChart = null;
+            }
+
+            const ctx = canvas.getContext('2d');
+            const chartConfig = {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: maxValue
+                        }
+                    }
+                }
+            };
+
+            // Create and store chart
+            const newChart = new Chart(ctx, chartConfig);
+            
+            if (canvasId === 'orientationChart') {
+                orientationChart = newChart;
+            } else if (canvasId === 'attentionChart') {
+                attentionChart = newChart;
+            } else if (canvasId === 'recallChart') {
+                recallChart = newChart;
+            } else if (canvasId === 'totalScoreChart') {
+                totalScoreChart = newChart;
+            }
+        }
+
+        function filterAssessmentByDate() {
+            const dateFilter = document.getElementById('assessmentDateFilter').value;
+            if (dateFilter) {
+                filteredAssessments = allAssessments.filter(a => a.date === dateFilter);
+            } else {
+                filteredAssessments = allAssessments;
+            }
+            displayAssessments();
+        }
+
+        function clearAssessmentFilter() {
+            document.getElementById('assessmentDateFilter').value = '';
+            filteredAssessments = allAssessments;
+            displayAssessments();
+        }
+
+        // Delete conversation
+        async function deleteConversation(index) {
+            if (!confirm('Are you sure you want to delete this conversation session?')) {
+                return;
+            }
+
+            showLoadingOverlay('conversations');
+            try {
+                const response = await fetch(`/api/conversations/${index}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete conversation');
+                }
+
+                // Reload conversations
+                await reloadConversations();
+            } catch (error) {
+                console.error('Error deleting conversation:', error);
+                alert('Error deleting conversation: ' + error.message);
+            } finally {
+                hideLoadingOverlay('conversations');
+            }
+        }
+
+        // Delete assessment
+        async function deleteAssessment(index) {
+            if (!confirm('Are you sure you want to delete this assessment?')) {
+                return;
+            }
+
+            showLoadingOverlay('assessments');
+            try {
+                const response = await fetch(`/api/assessments/${index}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete assessment');
+                }
+
+                // Reload assessments
+                await reloadAssessments();
+            } catch (error) {
+                console.error('Error deleting assessment:', error);
+                alert('Error deleting assessment: ' + error.message);
+            } finally {
+                hideLoadingOverlay('assessments');
+            }
+        }
+
+        // Reload conversations
+        async function reloadConversations() {
+            showLoadingOverlay('conversations');
+            try {
+                const response = await fetch('/api/conversations');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                allRecords = await response.json();
+                filteredRecords = allRecords;
+                displayData();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                const container = document.getElementById('recordsContainer');
+                if (container) {
+                    container.innerHTML = '<div class="empty-state">Error loading data. Please try again.</div>';
+                }
+            } finally {
+                hideLoadingOverlay('conversations');
+            }
+        }
+
+        // Reload assessments
+        async function reloadAssessments() {
+            showLoadingOverlay('assessments');
+            try {
+                const response = await fetch('/api/assessments');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch assessments');
+                }
+                allAssessments = await response.json();
+                filteredAssessments = allAssessments;
+                displayAssessments();
+            } catch (error) {
+                console.error('Error loading assessments:', error);
+                const container = document.getElementById('assessmentsContainer');
+                if (container) {
+                    container.innerHTML = '<div class="empty-state">Error loading assessments. Please try again.</div>';
+                }
+            } finally {
+                hideLoadingOverlay('assessments');
+            }
+        }
+
+        // Show loading overlay
+        function showLoadingOverlay(type) {
+            const overlayId = type === 'conversations' ? 'conversationsLoadingOverlay' : 'assessmentsLoadingOverlay';
+            const overlay = document.getElementById(overlayId);
+            if (overlay) {
+                overlay.classList.add('active');
+            }
+            const btnId = type === 'conversations' ? 'reloadConversationsBtn' : 'reloadAssessmentsBtn';
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = true;
+            }
+        }
+
+        // Hide loading overlay
+        function hideLoadingOverlay(type) {
+            const overlayId = type === 'conversations' ? 'conversationsLoadingOverlay' : 'assessmentsLoadingOverlay';
+            const overlay = document.getElementById(overlayId);
+            if (overlay) {
+                overlay.classList.remove('active');
+            }
+            const btnId = type === 'conversations' ? 'reloadConversationsBtn' : 'reloadAssessmentsBtn';
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
+
