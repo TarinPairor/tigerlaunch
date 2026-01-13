@@ -89,11 +89,25 @@ module.exports = async (req, res) => {
     }
     // Serve image file
     else if (pathname === '/image.jpeg' || pathname === '/image.jpg') {
-        const data = readFile(path.join(process.cwd(), 'image.jpeg'));
-        if (data) {
-            res.setHeader('Content-Type', 'image/jpeg');
-            return res.status(200).send(data);
+        // Try multiple possible paths for Vercel deployment
+        const possiblePaths = [
+            path.join(process.cwd(), 'image.jpeg'),
+            path.join(__dirname, '..', 'image.jpeg'),
+            path.join(process.cwd(), '..', 'image.jpeg'),
+            '/var/task/image.jpeg', // Vercel Lambda path
+            path.join('/var/task', 'image.jpeg')
+        ];
+        
+        for (const imagePath of possiblePaths) {
+            const data = readFile(imagePath);
+            if (data) {
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+                return res.status(200).send(data);
+            }
         }
+        
+        return res.status(404).send('Image not found');
     }
     // API endpoints
     else if (pathname === '/api-key' && req.method === 'GET') {
