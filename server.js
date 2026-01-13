@@ -290,3 +290,6 @@ server.listen(PORT, () => {
     console.log(`\n   Or enter it directly in the page when it loads\n`);
 });
 
+// Export for potential use as module
+module.exports = server;
+
