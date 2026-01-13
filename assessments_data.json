@@ -103,5 +103,199 @@
       }
     ],
     "completed": true
+  },
+  {
+    "type": "tics_assessment",
+    "dateTime": "2026-01-13T22:42:13.991Z",
+    "date": "2026-01-13",
+    "time": "05:42:13",
+    "scores": {
+      "orientationScore": 0,
+      "attentionScore": 0,
+      "immediateRecallScore": 0,
+      "totalScore": 0
+    },
+    "questions": [
+      {
+        "question": "What is today's date?",
+        "category": "Orientation",
+        "userAnswer": "14 January",
+        "correct": false,
+        "score": 0,
+        "explanation": "The date provided does not match the expected date of Wednesday, January 14, 2026."
+      },
+      {
+        "question": "What city are we in right now?",
+        "category": "Orientation",
+        "userAnswer": "",
+        "correct": false,
+        "score": 0,
+        "explanation": "The city was not provided in the conversation."
+      },
+      {
+        "question": "Repeat digits forward: 8-1-4",
+        "category": "Attention",
+        "userAnswer": "",
+        "correct": false,
+        "score": 0,
+        "explanation": "The digits were not provided in the conversation."
+      },
+      {
+        "question": "Repeat digits backward: 6-2-9",
+        "category": "Attention",
+        "userAnswer": "",
+        "correct": false,
+        "score": 0,
+        "explanation": "The digits were not provided in the conversation."
+      },
+      {
+        "question": "Repeat three words: river, chair, mango",
+        "category": "Immediate Recall",
+        "userAnswer": "",
+        "correct": false,
+        "score": 0,
+        "explanation": "The words were not provided in the conversation."
+      }
+    ],
+    "conversationHistory": [
+      {
+        "role": "user",
+        "content": "Hello, how are you?"
+      },
+      {
+        "role": "assistant",
+        "content": "First, a few quick questions. What is today's date?"
+      },
+      {
+        "role": "user",
+        "content": "14 January."
+      },
+      {
+        "role": "assistant",
+        "content": "Thank you. Now, what city are we in right now?"
+      }
+    ],
+    "completed": true
+  },
+  {
+    "type": "tics_assessment",
+    "dateTime": "2026-01-13T23:07:34.003Z",
+    "date": "2026-01-13",
+    "time": "06:07:34",
+    "scores": {
+      "orientationScore": 1,
+      "attentionScore": 1,
+      "immediateRecallScore": 1,
+      "totalScore": 3
+    },
+    "questions": [
+      {
+        "question": "What is today's date?",
+        "category": "Orientation",
+        "userAnswer": "14 January, 2025",
+        "correct": false,
+        "score": 0,
+        "explanation": "The user provided the correct day and month but the incorrect year."
+      },
+      {
+        "question": "What city are we in right now?",
+        "category": "Orientation",
+        "userAnswer": "Singapore",
+        "correct": true,
+        "score": 1,
+        "explanation": "The user correctly identified the city as Singapore."
+      },
+      {
+        "question": "Repeat digits forward: 8-1-4",
+        "category": "Attention",
+        "userAnswer": "814",
+        "correct": true,
+        "score": 1,
+        "explanation": "The user correctly repeated the digits forward as 814."
+      },
+      {
+        "question": "Repeat digits backward: 6-2-9",
+        "category": "Attention",
+        "userAnswer": "six, two, nine",
+        "correct": false,
+        "score": 0,
+        "explanation": "The user repeated the digits in the original order instead of backwards."
+      },
+      {
+        "question": "Repeat three words: river, chair, mango",
+        "category": "Immediate Recall",
+        "userAnswer": "River chair mango",
+        "correct": true,
+        "score": 1,
+        "explanation": "The user eventually repeated all three words correctly."
+      }
+    ],
+    "conversationHistory": [
+      {
+        "role": "user",
+        "content": "Hello?"
+      },
+      {
+        "role": "assistant",
+        "content": "Hello! First, a few quick questions. What is today's date?"
+      },
+      {
+        "role": "user",
+        "content": "14 January."
+      },
+      {
+        "role": "assistant",
+        "content": "That's correct for the day and month. Can you also tell me the year?"
+      },
+      {
+        "role": "user",
+        "content": "2025"
+      },
+      {
+        "role": "assistant",
+        "content": "Actually, today's date is Wednesday, January 14, 2026. Now, what city are we in right now?"
+      },
+      {
+        "role": "user",
+        "content": "Singapore."
+      },
+      {
+        "role": "assistant",
+        "content": "We're in Singapore, that's right! Now, let's move on. I'm going to say some digits. Please repeat them back to me: 8–1–4."
+      },
+      {
+        "role": "user",
+        "content": "814."
+      },
+      {
+        "role": "assistant",
+        "content": "Good. Now, repeat these numbers backwards: 6–2–9."
+      },
+      {
+        "role": "user",
+        "content": "six, two, nine."
+      },
+      {
+        "role": "assistant",
+        "content": "That's correct. Now, I'll say three words. Please repeat them now: river, chair, mango."
+      },
+      {
+        "role": "assistant",
+        "content": "You got two out of three. Let's try again: river, chair, mango."
+      },
+      {
+        "role": "user",
+        "content": "Dog, chair, mango."
+      },
+      {
+        "role": "user",
+        "content": "River chair mango"
+      },
+      {
+        "role": "assistant",
+        "content": "Great, you got them all this time. Thank you for your responses."
+      }
+    ],
+    "completed": true
   }
 ]

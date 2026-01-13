@@ -70,6 +70,11 @@
             color: #c62828;
         }
 
+        .status.complete {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
         .button-group {
             display: flex;
             gap: 15px;
@@ -278,6 +283,149 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 18px rgba(0,0,0,0.3);
         }
+
+        .audio-player {
+            margin-top: 20px;
+            text-align: center;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .voice-analysis-results {
+            display: none;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .voice-analysis-results.active {
+            display: block;
+        }
+
+        .voice-analysis-results h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-icon {
+            font-size: 32px;
+        }
+
+        .result-icon.healthy {
+            color: #4caf50;
+        }
+
+        .result-icon.mci {
+            color: #ff9800;
+        }
+
+        .description-modal {
+            background: #f0f7ff;
+            border-left: 4px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .description-modal h4 {
+            margin: 0 0 8px 0;
+            color: #1976d2;
+            font-size: 16px;
+        }
+
+        .result-probabilities {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .probability-bar-container {
+            margin-bottom: 20px;
+        }
+
+        .probability-bar-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .probability-bar-wrapper {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .probability-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            animation: barLoad 1s ease-out;
+        }
+
+        .probability-bar.healthy {
+            background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+        }
+
+        .probability-bar.mci {
+            background: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%);
+        }
+
+        @keyframes barLoad {
+            0% {
+                width: 0% !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -295,6 +443,14 @@
         
         <div class="config">
             <label>
+                AI Language:
+                <div style="margin-top: 5px;">
+                    <button id="languageToggle" onclick="toggleLanguage()" style="padding: 8px 16px; font-size: 14px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                        <span id="languageLabel">English</span> <span id="languageFlag">🇺🇸</span>
+                    </button>
+                </div>
+            </label>
+            <label style="margin-top: 15px;">
                 Silence Wait Time (ms):
                 <input type="number" id="silenceDuration" value="0" min="0" max="10000" step="500">
                 <small style="display: block; margin-top: 5px; color: #666; font-weight: normal;">
@@ -323,12 +479,33 @@
             </div>
         </div>
 
+        <div class="audio-player" id="audioPlayer" style="display: none;">
+            <p style="margin-bottom: 10px; color: #666;">Recorded Audio:</p>
+            <audio id="audioPlayback" controls></audio>
+        </div>
+
         <div class="pipeline-nav">
             <div class="pipeline-step">When you're ready, continue to the next step</div>
             <a href="/tics_assessment" class="next-arrow">
                 <span class="next-arrow-icon">→</span>
                 <span class="next-arrow-text">Cognitive Assessment</span>
             </a>
+        </div>
+
+        <div class="voice-analysis-results" id="voiceAnalysisResults">
+            <h2>Voice Analysis Results</h2>
+            <div class="result-item">
+                <div class="result-label">Voice Analysis Result</div>
+                <div class="result-value" id="predictedClass">-</div>
+            </div>
+            <div class="description-modal" id="descriptionModal" style="display: none;">
+                <h4 id="descriptionTitle"></h4>
+                <p id="descriptionText"></p>
+            </div>
+            <div class="result-item" id="probabilitiesSection" style="display: none;">
+                <div class="result-label">Detailed Probabilities</div>
+                <div class="result-probabilities" id="probabilities"></div>
+            </div>
         </div>
     </div>
 
@@ -337,12 +514,20 @@
         let audioElement = null;
         let dataChannel = null;
         let userAudioTrack = null;
+        let userStream = null;
         let serverAudioStream = null;
         let isSessionActive = false;
         let messageText = '';
         let userSpeakingStartTime = null;
         let aiResponseStartTime = null;
         let currentUserTranscript = '';
+        let audioBlob = null;
+        let mediaRecorder = null;
+        let isRecording = false;
+        let audioSegments = []; // Array to store audio segments from each listening period
+        let currentSegmentChunks = []; // Chunks for current segment
+        const API_ENDPOINT = 'http://localhost:5001/analyze';
+        let currentLanguage = 'en'; // 'en' for English, 'zh' for Chinese
         
         // Conversation metrics tracking
         let sessionStartTime = null;
@@ -436,14 +621,31 @@
                     const silenceDurationInput = document.getElementById('silenceDuration').value;
                     const silenceDuration = silenceDurationInput !== '' ? parseInt(silenceDurationInput) : 0;
                     
+                    // Get instructions based on language
+                    let instructions;
+                    if (currentLanguage === 'zh') {
+                        instructions = silenceDuration === 0 
+                            ? '你是一个友好、乐于助人的 AI 伙伴。请保持回答简洁、自然，适合语音交流，并在合适的情况下主动维持对话的进行。每次回复控制在 2–3 句话以内。'
+                            : '你是一个友好、乐于助人的 AI 伙伴，正在与一位可能说话较慢的老年人交流。请保持耐心，等待他们完全说完后再回应，并在合适的情况下主动维持对话的进行。保持回答简洁、自然，每次回复控制在 2–3 句话以内。';
+                    } else {
+                        instructions = silenceDuration === 0 
+                            ? 'You are a friendly, helpful AI companion. Keep responses concise and conversational, suitable for voice interaction, and try to keep the conversation going. Limit responses to 2–3 sentences.'
+                            : 'You are a friendly, helpful AI companion speaking with an elderly person who may speak slowly. Be patient, wait for them to finish speaking completely, and try to keep the conversation going. Keep responses concise and conversational. Limit responses to 2–3 sentences.';
+                    }
+
+                    
                     // Build session configuration
                     const sessionConfig = {
                         modalities: ['text', 'audio'],
-                        instructions: silenceDuration === 0 
-                            ? 'You are a friendly, helpful AI companion. Keep responses concise and conversational, suitable for voice interaction. Limit responses to 2-3 sentences.'
-                            : 'You are a friendly, helpful AI companion speaking with an elderly person who may speak slowly. Be patient, wait for them to finish speaking completely, and keep responses concise and conversational. Limit responses to 2-3 sentences.',
+                        instructions: instructions,
                         input_audio_transcription: {
                             model: 'whisper-1'
+                        },
+                        turn_detection: {
+                            type: 'client_vad',
+                            threshold: 0.5,
+                            prefix_padding_ms: 300,
+                            silence_duration_ms: 2000
                         }
                     };
                     
@@ -476,12 +678,15 @@
                 };
 
                 // Get user microphone
-                const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 userAudioTrack = userStream.getAudioTracks()[0];
                 peerConnection.addTrack(userAudioTrack, userStream);
                 
                 // Start with mic enabled for continuous listening
                 userAudioTrack.enabled = true;
+
+                // MediaRecorder will be started/stopped based on listening state
+                // Don't start recording yet - wait for listening state
 
                 // Create offer
                 const offer = await peerConnection.createOffer();
@@ -508,6 +713,7 @@
 
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('stopBtn').disabled = false;
+                document.getElementById('languageToggle').disabled = true;
                 clearMessages();
                 addMessage('system', 'Connected! You can now start speaking naturally...');
                 
@@ -516,11 +722,57 @@
                 userMessages = [];
                 totalWordsSpoken = 0;
                 totalSpeakingDuration = 0;
+                audioSegments = [];
+                currentSegmentChunks = [];
+                isRecording = false;
 
             } catch (error) {
                 console.error('Error starting session:', error);
                 updateStatus('error', `Error: ${error.message}`);
                 stopConversation();
+            }
+        }
+
+        // Start recording user audio segment (during listening state)
+        function startRecordingSegment() {
+            if (!userStream || isRecording) {
+                return;
+            }
+
+            try {
+                currentSegmentChunks = [];
+                mediaRecorder = new MediaRecorder(userStream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        currentSegmentChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    // Save this segment
+                    if (currentSegmentChunks.length > 0) {
+                        const segmentBlob = new Blob(currentSegmentChunks, { type: 'audio/webm' });
+                        audioSegments.push(segmentBlob);
+                        console.log(`✅ Saved audio segment ${audioSegments.length}, size: ${segmentBlob.size} bytes`);
+                    }
+                    currentSegmentChunks = [];
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                console.log('🎤 Started recording user audio segment');
+            } catch (error) {
+                console.error('Error starting audio recording:', error);
+            }
+        }
+
+        // Stop recording user audio segment (when user stops speaking)
+        function stopRecordingSegment() {
+            if (mediaRecorder && isRecording && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                isRecording = false;
+                console.log('🛑 Stopped recording user audio segment');
             }
         }
 
@@ -544,7 +796,17 @@
                     messageText = '';
                 }
                 updateStatus('listening', '🎤 Listening...');
+                // Start recording when we enter listening state (user will speak)
+                startRecordingSegment();
+            } else if (message.type === 'conversation.item.input_audio_transcription.started') {
+                // User started speaking - ensure we're recording
+                if (!isRecording) {
+                    startRecordingSegment();
+                }
             } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
+                // User finished speaking - stop recording this segment
+                stopRecordingSegment();
+                
                 // User speech transcribed
                 const transcript = message.transcript;
                 if (transcript) {
@@ -661,9 +923,13 @@
                     console.log('AI started responding at:', aiResponseStartTime, 'User started at:', userSpeakingStartTime);
                 }
                 updateStatus('speaking', '🔊 AI is speaking...');
+                // Stop recording if AI starts speaking (in case user was still speaking)
+                stopRecordingSegment();
             } else if (message.type === 'response.audio.done') {
                 // Audio finished
                 updateStatus('listening', '🎤 Listening...');
+                // Start recording when we enter listening state
+                startRecordingSegment();
             }
         }
 
@@ -749,6 +1015,76 @@
                 audioElement = null;
             }
 
+            // Stop any ongoing recording segment
+            stopRecordingSegment();
+
+            // Wait a bit for the last segment to finish saving
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Combine all audio segments into one continuous audio stream
+            if (audioSegments.length > 0) {
+                console.log(`🔗 Combining ${audioSegments.length} audio segments...`);
+                
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Decode all segments to AudioBuffers
+                    const audioBuffers = [];
+                    for (let i = 0; i < audioSegments.length; i++) {
+                        const arrayBuffer = await audioSegments[i].arrayBuffer();
+                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        audioBuffers.push(audioBuffer);
+                        console.log(`✅ Decoded segment ${i + 1}/${audioSegments.length}, duration: ${audioBuffer.duration.toFixed(2)}s`);
+                    }
+
+                    // Combine all AudioBuffers into one continuous buffer
+                    const sampleRate = audioBuffers[0].sampleRate;
+                    const numberOfChannels = audioBuffers[0].numberOfChannels;
+                    let totalLength = 0;
+                    
+                    // Calculate total length
+                    audioBuffers.forEach(buffer => {
+                        totalLength += buffer.length;
+                    });
+
+                    // Create combined buffer
+                    const combinedBuffer = audioContext.createBuffer(numberOfChannels, totalLength, sampleRate);
+                    
+                    // Copy each buffer into the combined buffer
+                    let offset = 0;
+                    audioBuffers.forEach((buffer, index) => {
+                        for (let channel = 0; channel < numberOfChannels; channel++) {
+                            const channelData = combinedBuffer.getChannelData(channel);
+                            const sourceData = buffer.getChannelData(channel);
+                            channelData.set(sourceData, offset);
+                        }
+                        offset += buffer.length;
+                        console.log(`  Copied segment ${index + 1}/${audioBuffers.length} (${buffer.length} samples) at offset ${offset - buffer.length}`);
+                    });
+
+                    console.log(`✅ Combined ${audioSegments.length} segments into one buffer, total duration: ${combinedBuffer.duration.toFixed(2)}s`);
+
+                    // Convert combined AudioBuffer to WAV
+                    audioBlob = audioBufferToWav(combinedBuffer);
+                    console.log(`✅ Converted to WAV, size: ${audioBlob.size} bytes`);
+
+                    // For debugging: play the combined audio
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById('audioPlayback').src = audioUrl;
+                    document.getElementById('audioPlayer').style.display = 'block';
+                } catch (error) {
+                    console.error('Error combining/converting audio:', error);
+                    // Fallback: try simple blob combination
+                    audioBlob = new Blob(audioSegments, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById('audioPlayback').src = audioUrl;
+                    document.getElementById('audioPlayer').style.display = 'block';
+                }
+            } else {
+                console.warn('⚠️ No audio segments recorded');
+                audioBlob = null;
+            }
+
             if (userAudioTrack) {
                 userAudioTrack.stop();
                 userAudioTrack = null;
@@ -803,6 +1139,7 @@
 
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
+            document.getElementById('languageToggle').disabled = false;
             isSessionActive = false;
             serverAudioStream = null;
             messageText = '';
@@ -810,6 +1147,11 @@
             aiResponseStartTime = null;
             currentUserTranscript = '';
             updateStatus('idle', 'Stopped');
+
+            // Run voice analysis if we have audio
+            if (audioBlob) {
+                await analyzeAudio();
+            }
         }
 
         // Add message to UI
@@ -877,6 +1219,204 @@
         // Set silence duration preset
         function setSilenceDuration(ms) {
             document.getElementById('silenceDuration').value = ms;
+        }
+
+        // Toggle language between English and Chinese
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'zh' : 'en';
+            const languageLabel = document.getElementById('languageLabel');
+            const languageFlag = document.getElementById('languageFlag');
+            
+            if (currentLanguage === 'zh') {
+                languageLabel.textContent = '中文';
+                languageFlag.textContent = '🇨🇳';
+            } else {
+                languageLabel.textContent = 'English';
+                languageFlag.textContent = '🇺🇸';
+            }
+        }
+
+        // Normalize prediction labels (CTRL -> Healthy, etc.)
+        function normalizePrediction(pred) {
+            const predStr = String(pred).toUpperCase().trim();
+            if (predStr === 'CTRL' || predStr === 'CONTROL' || predStr === 'HEALTHY') {
+                return 'Healthy';
+            } else if (predStr === 'MCI' || predStr.includes('MCI')) {
+                return 'MCI';
+            }
+            return pred; // Return original if not recognized
+        }
+
+        // Convert AudioBuffer to WAV Blob
+        function audioBufferToWav(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const format = 1; // PCM
+            const bitDepth = 16;
+            
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+            
+            const length = buffer.length * numChannels * bytesPerSample + 44;
+            const arrayBuffer = new ArrayBuffer(length);
+            const view = new DataView(arrayBuffer);
+            const samples = [];
+            
+            // Convert float samples to 16-bit PCM
+            for (let channel = 0; channel < numChannels; channel++) {
+                const channelData = buffer.getChannelData(channel);
+                for (let i = 0; i < channelData.length; i++) {
+                    const sample = Math.max(-1, Math.min(1, channelData[i]));
+                    samples.push(sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
+                }
+            }
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, length - 8, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(36, 'data');
+            view.setUint32(40, length - 44, true);
+            
+            // Write samples
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++) {
+                view.setInt16(offset, samples[i], true);
+                offset += 2;
+            }
+            
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        async function analyzeAudio() {
+            try {
+                // Step 1: Analyze voice features (if audio available)
+                if (!audioBlob) {
+                    console.warn('No audio blob available for voice analysis');
+                    return;
+                }
+
+                updateStatus('processing', '🔄 Analyzing voice features...');
+
+                // Convert blob to File for FormData
+                const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio', audioFile);
+
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                
+                // Display results
+                const prediction = result.prediction || result.pred || 'Unknown';
+                const normalizedPrediction = normalizePrediction(prediction);
+                
+                const predictedClassDiv = document.getElementById('predictedClass');
+                predictedClassDiv.innerHTML = '';
+                
+                // Add icon
+                const icon = document.createElement('span');
+                icon.className = `result-icon ${normalizedPrediction.toLowerCase()}`;
+                icon.textContent = normalizedPrediction === 'Healthy' ? '✅' : '⚠️';
+                predictedClassDiv.appendChild(icon);
+                
+                // Add text
+                const text = document.createElement('span');
+                text.textContent = normalizedPrediction;
+                predictedClassDiv.appendChild(text);
+                
+                // Show description modal
+                const descriptionModal = document.getElementById('descriptionModal');
+                const descriptionTitle = document.getElementById('descriptionTitle');
+                const descriptionText = document.getElementById('descriptionText');
+                
+                if (normalizedPrediction === 'Healthy') {
+                    descriptionTitle.textContent = '✅ Healthy Cognitive Status';
+                    descriptionText.textContent = 'Your voice analysis indicates healthy cognitive function. This is a positive result, but please remember this is a screening tool and not a medical diagnosis.';
+                    descriptionModal.style.display = 'block';
+                } else if (normalizedPrediction === 'MCI') {
+                    descriptionTitle.textContent = '⚠️ Mild Cognitive Impairment (MCI)';
+                    descriptionText.textContent = 'Your voice analysis suggests possible mild cognitive impairment. This is a screening result and should be discussed with a healthcare professional for proper evaluation.';
+                    descriptionModal.style.display = 'block';
+                } else {
+                    descriptionModal.style.display = 'none';
+                }
+                
+                // Display probabilities as horizontal bar chart
+                if (result.probabilities) {
+                    const probSection = document.getElementById('probabilitiesSection');
+                    const probContainer = document.getElementById('probabilities');
+                    probContainer.innerHTML = '';
+                    
+                    // Sort probabilities by value (highest first)
+                    const sortedProbs = Object.entries(result.probabilities)
+                        .sort((a, b) => b[1] - a[1]);
+                    
+                    sortedProbs.forEach(([label, value]) => {
+                        const normalizedLabel = normalizePrediction(label);
+                        const percentage = (value * 100).toFixed(1);
+                        const barClass = normalizedLabel.toLowerCase();
+                        
+                        const probContainerItem = document.createElement('div');
+                        probContainerItem.className = 'probability-bar-container';
+                        probContainerItem.innerHTML = `
+                            <div class="probability-bar-label">
+                                <span>${normalizedLabel}</span>
+                                <span>${percentage}%</span>
+                            </div>
+                            <div class="probability-bar-wrapper">
+                                <div class="probability-bar ${barClass}" style="width: 0%;" data-width="${percentage}">
+                                    ${percentage}%
+                                </div>
+                            </div>
+                        `;
+                        probContainer.appendChild(probContainerItem);
+                    });
+                    
+                    // Animate bars after a short delay
+                    setTimeout(() => {
+                        const bars = probContainer.querySelectorAll('.probability-bar');
+                        bars.forEach(bar => {
+                            const width = bar.getAttribute('data-width');
+                            bar.style.width = width + '%';
+                        });
+                    }, 100);
+                    
+                    probSection.style.display = 'block';
+                } else {
+                    document.getElementById('probabilitiesSection').style.display = 'none';
+                }
+
+                document.getElementById('voiceAnalysisResults').classList.add('active');
+                updateStatus('complete', '✅ Voice analysis complete! View your results below.');
+                console.log('✅ Voice analysis complete');
+            } catch (error) {
+                console.error('Error analyzing audio:', error);
+                updateStatus('idle', '❌ Error analyzing audio: ' + error.message);
+                alert('Error analyzing audio: ' + error.message);
+            }
         }
 
         // Initialize on page load

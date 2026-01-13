@@ -429,6 +429,149 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 18px rgba(0,0,0,0.3);
         }
+
+        .audio-player {
+            margin-top: 20px;
+            text-align: center;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .audio-player audio {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .voice-analysis-results {
+            display: none;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .voice-analysis-results.active {
+            display: block;
+        }
+
+        .voice-analysis-results h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-icon {
+            font-size: 32px;
+        }
+
+        .result-icon.healthy {
+            color: #4caf50;
+        }
+
+        .result-icon.mci {
+            color: #ff9800;
+        }
+
+        .description-modal {
+            background: #f0f7ff;
+            border-left: 4px solid #2196f3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .description-modal h4 {
+            margin: 0 0 8px 0;
+            color: #1976d2;
+            font-size: 16px;
+        }
+
+        .result-probabilities {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .probability-bar-container {
+            margin-bottom: 20px;
+        }
+
+        .probability-bar-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .probability-bar-wrapper {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .probability-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            animation: barLoad 1s ease-out;
+        }
+
+        .probability-bar.healthy {
+            background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%);
+        }
+
+        .probability-bar.mci {
+            background: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%);
+        }
+
+        @keyframes barLoad {
+            0% {
+                width: 0% !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -446,6 +589,14 @@
         
         <div class="config">
             <label>
+                AI Language:
+                <div style="margin-top: 5px;">
+                    <button id="languageToggle" onclick="toggleLanguage()" style="padding: 8px 16px; font-size: 14px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 600;">
+                        <span id="languageLabel">English</span> <span id="languageFlag">🇺🇸</span>
+                    </button>
+                </div>
+            </label>
+            <label style="margin-top: 15px;">
                 <input type="password" id="apiKey" placeholder="sk-... or leave empty to use .env">
             </label>
         </div>
@@ -461,6 +612,11 @@
             <div style="text-align: center; color: #999; padding: 20px;">
                 Your assessment will appear here once you begin...
             </div>
+        </div>
+
+        <div class="audio-player" id="audioPlayer" style="display: none;">
+            <p style="margin-bottom: 10px; color: #666;">Recorded Audio:</p>
+            <audio id="audioPlayback" controls></audio>
         </div>
 
         <div class="pipeline-nav">
@@ -482,6 +638,22 @@
 
             <div id="scoreCards"></div>
         </div>
+
+        <div class="voice-analysis-results" id="voiceAnalysisResults">
+            <h2>Voice Analysis Results</h2>
+            <div class="result-item">
+                <div class="result-label">Voice Analysis Result</div>
+                <div class="result-value" id="predictedClass">-</div>
+            </div>
+            <div class="description-modal" id="descriptionModal" style="display: none;">
+                <h4 id="descriptionTitle"></h4>
+                <p id="descriptionText"></p>
+            </div>
+            <div class="result-item" id="probabilitiesSection" style="display: none;">
+                <div class="result-label">Detailed Probabilities</div>
+                <div class="result-probabilities" id="probabilities"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -489,10 +661,18 @@
         let audioElement = null;
         let dataChannel = null;
         let userAudioTrack = null;
+        let userStream = null;
         let isSessionActive = false;
         let messageText = '';
         let conversationHistory = [];
         let currentCountdown = null;
+        let audioBlob = null;
+        let mediaRecorder = null;
+        let isRecording = false;
+        let audioSegments = []; // Array to store audio segments from each listening period
+        let currentSegmentChunks = []; // Chunks for current segment
+        const API_ENDPOINT = 'http://localhost:5001/analyze';
+        let currentLanguage = 'en'; // 'en' for English, 'zh' for Chinese
 
         // Get API key from input or server
         async function getApiKey() {
@@ -571,6 +751,9 @@
 
                 // Reset conversation history
                 conversationHistory = [];
+                audioSegments = [];
+                currentSegmentChunks = [];
+                isRecording = false;
                 
                 // Create peer connection
                 peerConnection = new RTCPeerConnection();
@@ -601,14 +784,60 @@
                     
                     // Build session configuration with TICS-m script
                     const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-                    const sessionConfig = {
-                        modalities: ['text', 'audio'],
-                        instructions: `You are conducting a TICS-m (Telephone Interview for Cognitive Status-modified) assessment. Follow this script exactly:
+                    
+                    // Get instructions based on language
+                    let instructions;
+                    if (currentLanguage === 'zh') {
+    instructions = `你正在进行一次 TICS-m（修订版电话认知状态访谈）评估。请严格按照以下脚本执行，并遵守以下规则：
+
+【重要规则】
+- 1) 不要告诉用户他们的回答是“正确/错误”（不要评价对错）。
+- 2) 除了“今天是几号？”这一题以外：只要对方的回答听得清楚、且与问题有一定关联（即使内容不正确，例如把词/数字顺序说错、说成别的词等），都不要追问，直接进入下一题。
+- 3) 只有在回答完全无法理解或与问题毫无关联时才请对方重复（例如：长时间沉默、听不清、胡乱噪音、完全不相关的随机词且无法判断是在回答什么）。
+
+首先说：
+"首先，问您几个简短的问题。"
+
+定向力问题（每个问题后都要等待对方回答）：
+
+"今天是几号？"
+（正确答案应与：${todayDate} 一致）。
+如果他们只说了日期的一部分（例如只说星期，或只说日期 + 月份），请提示他们补充缺失的部分后再继续。
+注意：这里可以提示他们补全年份/月份/日期，但仍不要说他们“对/错”。
+
+"我们现在所在的城市是哪里？"
+（正确答案是：新加坡）
+
+注意力问题（每个问题后都要等待对方回答）：
+
+"我将说几个数字，请您重复一遍：8–1–4。"
+（正确答案：8，1，4）
+
+"现在请您把这些数字倒着说一遍：6–2–9。"
+（正确答案：9，2，6）
+
+即时回忆：
+
+"我将说三个词，请您现在重复一遍：河流，椅子，芒果。"
+（等待他们重复全部三个词）
+
+在每个问题之后，请等待用户给出完整回答后再继续。
+保持耐心和友好的态度。
+你的回应要简短，只需中性确认（例如“好的/明白了/谢谢”）然后进入下一题。
+如果他们的回答听不清或无法理解，才请他们重复一遍答案。`;
+} else {
+    instructions = `You are conducting a TICS-m (Telephone Interview for Cognitive Status-modified) assessment. Follow this script exactly, and obey these rules:
+
+IMPORTANT RULES
+- 1) Do NOT tell the user whether they are correct or incorrect (no correctness feedback).
+- 2) For EVERYTHING except the "What is today's date?" question: if the answer is intelligible and appears to be an attempt related to the question (even if wrong, e.g., wrong order like "dog, mango, river" or saying the digits incorrectly), do NOT ask again—acknowledge neutrally and move on.
+- 3) Only ask them to repeat if the response is completely unintelligible or clearly unrelated to the question (e.g., silence, inaudible audio, gibberish/noise, random words with no connection).
 
 1. First say: "First, a few quick questions."
 
 2. Orientation questions (wait for response after each):
-   - "What is today's date?" (The correct answer should match: ${todayDate})
+   - "What is today's date?" (The correct answer should match: ${todayDate}). If they say only part of the date (ie Day, Day + Month) urge them to complete the missing component before moving on.
+     Note: You may prompt for missing components here (e.g., ask for the year), but still do not say whether they are correct/incorrect.
    - "What city are we in right now?" (The correct answer is: Singapore)
 
 3. Attention questions (wait for response after each):
@@ -618,7 +847,13 @@
 4. Immediate recall:
    - "I'll say three words. Please repeat them now: river, chair, mango." (Wait for them to repeat all three words)
 
-After each question, wait for the user's complete response before proceeding. Be patient and friendly. Keep your responses brief and move to the next question after acknowledging their answer.`,
+After each question, wait for the user's complete response before proceeding. Be patient and friendly. Keep your responses brief, use neutral acknowledgements (e.g., "Okay," "Thanks," "I see"), then move to the next question. If they say something unintelligible or unrelated, ask them to repeat.`;
+}
+
+                    
+                    const sessionConfig = {
+                        modalities: ['text', 'audio'],
+                        instructions: instructions,
                         input_audio_transcription: {
                             model: 'whisper-1'
                         },
@@ -646,10 +881,13 @@ After each question, wait for the user's complete response before proceeding. Be
                 };
 
                 // Get user microphone
-                const userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                userStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 userAudioTrack = userStream.getAudioTracks()[0];
                 peerConnection.addTrack(userAudioTrack, userStream);
                 userAudioTrack.enabled = true;
+
+                // MediaRecorder will be started/stopped based on listening state
+                // Don't start recording yet - wait for listening state
 
                 // Create offer
                 const offer = await peerConnection.createOffer();
@@ -676,6 +914,7 @@ After each question, wait for the user's complete response before proceeding. Be
 
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('stopBtn').disabled = false;
+                document.getElementById('languageToggle').disabled = true;
                 clearMessages();
                 addMessage('system', 'Assessment started. Please listen carefully and answer each question naturally.');
 
@@ -683,6 +922,49 @@ After each question, wait for the user's complete response before proceeding. Be
                 console.error('Error starting assessment:', error);
                 updateStatus('error', `Error: ${error.message}`);
                 stopAssessment();
+            }
+        }
+
+        // Start recording user audio segment (during listening state)
+        function startRecordingSegment() {
+            if (!userStream || isRecording) {
+                return;
+            }
+
+            try {
+                currentSegmentChunks = [];
+                mediaRecorder = new MediaRecorder(userStream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        currentSegmentChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    // Save this segment
+                    if (currentSegmentChunks.length > 0) {
+                        const segmentBlob = new Blob(currentSegmentChunks, { type: 'audio/webm' });
+                        audioSegments.push(segmentBlob);
+                        console.log(`✅ Saved audio segment ${audioSegments.length}, size: ${segmentBlob.size} bytes`);
+                    }
+                    currentSegmentChunks = [];
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                console.log('🎤 Started recording user audio segment');
+            } catch (error) {
+                console.error('Error starting audio recording:', error);
+            }
+        }
+
+        // Stop recording user audio segment (when user stops speaking)
+        function stopRecordingSegment() {
+            if (mediaRecorder && isRecording && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                isRecording = false;
+                console.log('🛑 Stopped recording user audio segment');
             }
         }
 
@@ -701,11 +983,21 @@ After each question, wait for the user's complete response before proceeding. Be
                     // Show countdown before listening
                     showCountdown(() => {
                         updateStatus('listening', '🎤 Listening...');
+                        // Start recording when we enter listening state (user will speak)
+                        startRecordingSegment();
                     });
                     
                     messageText = '';
                 }
+            } else if (message.type === 'conversation.item.input_audio_transcription.started') {
+                // User started speaking - ensure we're recording
+                if (!isRecording) {
+                    startRecordingSegment();
+                }
             } else if (message.type === 'conversation.item.input_audio_transcription.completed') {
+                // User finished speaking - stop recording this segment
+                stopRecordingSegment();
+                
                 // User speech transcribed
                 const transcript = message.transcript;
                 if (transcript) {
@@ -715,8 +1007,12 @@ After each question, wait for the user's complete response before proceeding. Be
                 }
             } else if (message.type === 'response.audio.delta') {
                 updateStatus('speaking', '🔊 AI is speaking...');
+                // Stop recording if AI starts speaking (in case user was still speaking)
+                stopRecordingSegment();
             } else if (message.type === 'response.audio.done') {
                 updateStatus('listening', '🎤 Listening...');
+                // Start recording when we enter listening state
+                startRecordingSegment();
             }
         }
 
@@ -796,6 +1092,76 @@ After each question, wait for the user's complete response before proceeding. Be
                 audioElement = null;
             }
 
+            // Stop any ongoing recording segment
+            stopRecordingSegment();
+
+            // Wait a bit for the last segment to finish saving
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Combine all audio segments into one continuous audio stream
+            if (audioSegments.length > 0) {
+                console.log(`🔗 Combining ${audioSegments.length} audio segments...`);
+                
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Decode all segments to AudioBuffers
+                    const audioBuffers = [];
+                    for (let i = 0; i < audioSegments.length; i++) {
+                        const arrayBuffer = await audioSegments[i].arrayBuffer();
+                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        audioBuffers.push(audioBuffer);
+                        console.log(`✅ Decoded segment ${i + 1}/${audioSegments.length}, duration: ${audioBuffer.duration.toFixed(2)}s`);
+                    }
+
+                    // Combine all AudioBuffers into one continuous buffer
+                    const sampleRate = audioBuffers[0].sampleRate;
+                    const numberOfChannels = audioBuffers[0].numberOfChannels;
+                    let totalLength = 0;
+                    
+                    // Calculate total length
+                    audioBuffers.forEach(buffer => {
+                        totalLength += buffer.length;
+                    });
+
+                    // Create combined buffer
+                    const combinedBuffer = audioContext.createBuffer(numberOfChannels, totalLength, sampleRate);
+                    
+                    // Copy each buffer into the combined buffer
+                    let offset = 0;
+                    audioBuffers.forEach((buffer, index) => {
+                        for (let channel = 0; channel < numberOfChannels; channel++) {
+                            const channelData = combinedBuffer.getChannelData(channel);
+                            const sourceData = buffer.getChannelData(channel);
+                            channelData.set(sourceData, offset);
+                        }
+                        offset += buffer.length;
+                        console.log(`  Copied segment ${index + 1}/${audioBuffers.length} (${buffer.length} samples) at offset ${offset - buffer.length}`);
+                    });
+
+                    console.log(`✅ Combined ${audioSegments.length} segments into one buffer, total duration: ${combinedBuffer.duration.toFixed(2)}s`);
+
+                    // Convert combined AudioBuffer to WAV
+                    audioBlob = audioBufferToWav(combinedBuffer);
+                    console.log(`✅ Converted to WAV, size: ${audioBlob.size} bytes`);
+
+                    // For debugging: play the combined audio
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById('audioPlayback').src = audioUrl;
+                    document.getElementById('audioPlayer').style.display = 'block';
+                } catch (error) {
+                    console.error('Error combining/converting audio:', error);
+                    // Fallback: try simple blob combination
+                    audioBlob = new Blob(audioSegments, { type: 'audio/webm' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById('audioPlayback').src = audioUrl;
+                    document.getElementById('audioPlayer').style.display = 'block';
+                }
+            } else {
+                console.warn('⚠️ No audio segments recorded');
+                audioBlob = null;
+            }
+
             if (userAudioTrack) {
                 userAudioTrack.stop();
                 userAudioTrack = null;
@@ -803,6 +1169,7 @@ After each question, wait for the user's complete response before proceeding. Be
 
             document.getElementById('startBtn').disabled = false;
             document.getElementById('stopBtn').disabled = true;
+            document.getElementById('languageToggle').disabled = false;
             isSessionActive = false;
             messageText = '';
 
@@ -811,6 +1178,11 @@ After each question, wait for the user's complete response before proceeding. Be
                 await scoreAssessment();
             } else {
                 updateStatus('idle', 'Assessment stopped');
+            }
+
+            // Run voice analysis if we have audio
+            if (audioBlob) {
+                await analyzeAudio();
             }
         }
 
@@ -1069,6 +1441,210 @@ Return ONLY valid JSON, no other text.`;
                 statusDiv.classList.add('pulse');
             } else {
                 statusDiv.classList.remove('pulse');
+            }
+        }
+
+        // Toggle language between English and Chinese
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'zh' : 'en';
+            const languageLabel = document.getElementById('languageLabel');
+            const languageFlag = document.getElementById('languageFlag');
+            
+            if (currentLanguage === 'zh') {
+                languageLabel.textContent = '中文';
+                languageFlag.textContent = '🇨🇳';
+            } else {
+                languageLabel.textContent = 'English';
+                languageFlag.textContent = '🇺🇸';
+            }
+        }
+
+        // Normalize prediction labels (CTRL -> Healthy, etc.)
+        function normalizePrediction(pred) {
+            const predStr = String(pred).toUpperCase().trim();
+            if (predStr === 'CTRL' || predStr === 'CONTROL' || predStr === 'HEALTHY') {
+                return 'Healthy';
+            } else if (predStr === 'MCI' || predStr.includes('MCI')) {
+                return 'MCI';
+            }
+            return pred; // Return original if not recognized
+        }
+
+        // Convert AudioBuffer to WAV Blob
+        function audioBufferToWav(buffer) {
+            const numChannels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const format = 1; // PCM
+            const bitDepth = 16;
+            
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numChannels * bytesPerSample;
+            
+            const length = buffer.length * numChannels * bytesPerSample + 44;
+            const arrayBuffer = new ArrayBuffer(length);
+            const view = new DataView(arrayBuffer);
+            const samples = [];
+            
+            // Convert float samples to 16-bit PCM
+            for (let channel = 0; channel < numChannels; channel++) {
+                const channelData = buffer.getChannelData(channel);
+                for (let i = 0; i < channelData.length; i++) {
+                    const sample = Math.max(-1, Math.min(1, channelData[i]));
+                    samples.push(sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
+                }
+            }
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, length - 8, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, format, true);
+            view.setUint16(22, numChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(36, 'data');
+            view.setUint32(40, length - 44, true);
+            
+            // Write samples
+            let offset = 44;
+            for (let i = 0; i < samples.length; i++) {
+                view.setInt16(offset, samples[i], true);
+                offset += 2;
+            }
+            
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        async function analyzeAudio() {
+            try {
+                // Step 1: Analyze voice features (if audio available)
+                if (!audioBlob) {
+                    console.warn('No audio blob available for voice analysis');
+                    return;
+                }
+
+                updateStatus('processing', '🔄 Analyzing voice features...');
+
+                // Convert blob to File for FormData
+                const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('audio', audioFile);
+
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                
+                // Display results
+                const prediction = result.prediction || result.pred || 'Unknown';
+                const normalizedPrediction = normalizePrediction(prediction);
+                
+                const predictedClassDiv = document.getElementById('predictedClass');
+                predictedClassDiv.innerHTML = '';
+                
+                // Add icon
+                const icon = document.createElement('span');
+                icon.className = `result-icon ${normalizedPrediction.toLowerCase()}`;
+                icon.textContent = normalizedPrediction === 'Healthy' ? '✅' : '⚠️';
+                predictedClassDiv.appendChild(icon);
+                
+                // Add text
+                const text = document.createElement('span');
+                text.textContent = normalizedPrediction;
+                predictedClassDiv.appendChild(text);
+                
+                // Show description modal
+                const descriptionModal = document.getElementById('descriptionModal');
+                const descriptionTitle = document.getElementById('descriptionTitle');
+                const descriptionText = document.getElementById('descriptionText');
+                
+                if (normalizedPrediction === 'Healthy') {
+                    descriptionTitle.textContent = '✅ Healthy Cognitive Status';
+                    descriptionText.textContent = 'Your voice analysis indicates healthy cognitive function. This is a positive result, but please remember this is a screening tool and not a medical diagnosis.';
+                    descriptionModal.style.display = 'block';
+                } else if (normalizedPrediction === 'MCI') {
+                    descriptionTitle.textContent = '⚠️ Mild Cognitive Impairment (MCI)';
+                    descriptionText.textContent = 'Your voice analysis suggests possible mild cognitive impairment. This is a screening result and should be discussed with a healthcare professional for proper evaluation.';
+                    descriptionModal.style.display = 'block';
+                } else {
+                    descriptionModal.style.display = 'none';
+                }
+                
+                // Display probabilities as horizontal bar chart
+                if (result.probabilities) {
+                    const probSection = document.getElementById('probabilitiesSection');
+                    const probContainer = document.getElementById('probabilities');
+                    probContainer.innerHTML = '';
+                    
+                    // Sort probabilities by value (highest first)
+                    const sortedProbs = Object.entries(result.probabilities)
+                        .sort((a, b) => b[1] - a[1]);
+                    
+                    sortedProbs.forEach(([label, value]) => {
+                        const normalizedLabel = normalizePrediction(label);
+                        const percentage = (value * 100).toFixed(1);
+                        const barClass = normalizedLabel.toLowerCase();
+                        
+                        const probContainerItem = document.createElement('div');
+                        probContainerItem.className = 'probability-bar-container';
+                        probContainerItem.innerHTML = `
+                            <div class="probability-bar-label">
+                                <span>${normalizedLabel}</span>
+                                <span>${percentage}%</span>
+                            </div>
+                            <div class="probability-bar-wrapper">
+                                <div class="probability-bar ${barClass}" style="width: 0%;" data-width="${percentage}">
+                                    ${percentage}%
+                                </div>
+                            </div>
+                        `;
+                        probContainer.appendChild(probContainerItem);
+                    });
+                    
+                    // Animate bars after a short delay
+                    setTimeout(() => {
+                        const bars = probContainer.querySelectorAll('.probability-bar');
+                        bars.forEach(bar => {
+                            const width = bar.getAttribute('data-width');
+                            bar.style.width = width + '%';
+                        });
+                    }, 100);
+                    
+                    probSection.style.display = 'block';
+                } else {
+                    document.getElementById('probabilitiesSection').style.display = 'none';
+                }
+
+                document.getElementById('voiceAnalysisResults').classList.add('active');
+                console.log('✅ Voice analysis complete');
+                
+                // Update scoring status to show completion
+                document.getElementById('scoringSpinner').style.display = 'none';
+                document.getElementById('scoringStatus').textContent = '✅ Assessment and voice analysis complete!';
+            } catch (error) {
+                console.error('Error analyzing audio:', error);
+                alert('Error analyzing audio: ' + error.message);
+                
+                // Update scoring status even on error
+                document.getElementById('scoringSpinner').style.display = 'none';
+                document.getElementById('scoringStatus').textContent = '⚠️ Assessment complete, but voice analysis failed.';
             }
         }
 
