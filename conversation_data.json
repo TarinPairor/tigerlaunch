@@ -11,50 +11,6 @@
     "completed": true
   },
   {
-    "dateTime": "2026-01-11T23:44:05.590Z",
-    "date": "2026-01-11",
-    "time": "06:44:05",
-    "duration": 27,
-    "speechActivity": 0.235,
-    "avgSpeechRate": 2.22,
-    "totalWords": 14,
-    "messageCount": 3,
-    "completed": true
-  },
-  {
-    "dateTime": "2026-01-13T22:36:30.098Z",
-    "date": "2026-01-13",
-    "time": "05:36:30",
-    "duration": 18,
-    "speechActivity": 0.225,
-    "avgSpeechRate": 1.83,
-    "totalWords": 7,
-    "messageCount": 2,
-    "completed": true
-  },
-  {
-    "dateTime": "2026-01-13T22:38:14.291Z",
-    "date": "2026-01-13",
-    "time": "05:38:14",
-    "duration": 8,
-    "speechActivity": 0.173,
-    "avgSpeechRate": 2.73,
-    "totalWords": 4,
-    "messageCount": 1,
-    "completed": true
-  },
-  {
-    "dateTime": "2026-01-13T22:43:07.031Z",
-    "date": "2026-01-13",
-    "time": "05:43:07",
-    "duration": 22,
-    "speechActivity": 0.23,
-    "avgSpeechRate": 1.37,
-    "totalWords": 7,
-    "messageCount": 2,
-    "completed": true
-  },
-  {
     "dateTime": "2026-01-13T23:02:29.365Z",
     "date": "2026-01-13",
     "time": "06:02:29",
@@ -96,6 +52,28 @@
     "avgSpeechRate": 0,
     "totalWords": 0,
     "messageCount": 0,
+    "completed": true
+  },
+  {
+    "dateTime": "2026-01-14T13:59:25.943Z",
+    "date": "2026-01-14",
+    "time": "20:59:25",
+    "duration": 31,
+    "speechActivity": 0,
+    "avgSpeechRate": 0,
+    "totalWords": 0,
+    "messageCount": 0,
+    "completed": true
+  },
+  {
+    "dateTime": "2026-01-14T14:27:21.616Z",
+    "date": "2026-01-14",
+    "time": "21:27:21",
+    "duration": 42,
+    "speechActivity": 0.277,
+    "avgSpeechRate": 0.72,
+    "totalWords": 8,
+    "messageCount": 2,
     "completed": true
   }
 ]
