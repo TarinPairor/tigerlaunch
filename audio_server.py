@@ -53,6 +53,7 @@ DEMENTIA_BANK_FEATURE_COLUMNS = [
     "mfcc2_sma3_amean",
 ]
 
+
 # Initialize openSMILE
 smile = opensmile.Smile(
     feature_set=opensmile.FeatureSet.eGeMAPSv02,
@@ -193,8 +194,8 @@ def health_check():
 
 if __name__ == '__main__':
     # Try to load model and scaler
-    model_path = os.getenv('MODEL_PATH', 'dementiabank_model.joblib')
-    scaler_path = os.getenv('SCALER_PATH', 'dementiabank_scaler.joblib')
+    model_path = os.getenv('MODEL_PATH', 'dementiabank_dementianet_model.joblib')
+    scaler_path = os.getenv('SCALER_PATH', 'dementiabank_dementianet_scaler.joblib')
     load_model_and_scaler(model_path, scaler_path)
     
     if model is None or scaler is None:
